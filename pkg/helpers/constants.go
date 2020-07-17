@@ -24,6 +24,7 @@ const (
 func initPaths() {
 	configPath = GetWorkingDirectory()
 	LogsPath = filepath.Join(GetWorkingDirectory(), "logs")
+	StaticPath = filepath.Join(GetWorkingDirectory(), "web/components/static")
 	TemplatePath = filepath.Join(GetWorkingDirectory(), "web/components")
 	DatabasePath = filepath.Join(GetWorkingDirectory(), "database")
 }

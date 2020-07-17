@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"fmt"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/gorilla/mux"
@@ -26,8 +27,8 @@ var SessionsStore = sessions.NewCookieStore(helpers.GetSessionsKey())
 func (a Authentication) Register(r *mux.Router) {
 	authRouter := r.PathPrefix(baseURL).Subrouter()
 
-	authRouter.HandleFunc("/login/", loginHandler)
-	authRouter.HandleFunc("/logout/", logoutHandler)
+	authRouter.HandleFunc("/login-verify/", loginHandler).Methods("POST")
+	authRouter.HandleFunc("/logout/", logoutHandler).Methods("POST")
 	authRouter.HandleFunc("/create/", newUser).Methods("POST")
 }
 
@@ -42,54 +43,44 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 
+	queryParams := r.URL.Query()
+
 	err := r.ParseForm()
 	if err != nil {
 		helpers.LogError(err.Error(), component)
 	}
 
-	username := r.FormValue(helpers.UsernameKey)
-	password := r.FormValue(helpers.PasswordKey)
+	if user, ok := queryParams[helpers.UsernameKey]; ok && len(user) > 0 {
+		if pass, ok := queryParams[helpers.PasswordKey]; ok && len(pass) > 0 {
+			username := user[0]
+			password := pass[0]
 
-	if username != "" && password != "" {
-		if userIsValid(username, password) {
-			session.Values[helpers.UsernameKey] = username
-			prevURL := session.Values[helpers.PrevURLKey]
+			if username != "" && password != "" {
+				if userIsValid(username, password) {
+					session.Values[helpers.UsernameKey] = username
+					session.Options.MaxAge = 30 * 60
 
-			session.Options.MaxAge = 30 * 60
-
-			if prevURL != nil {
-				session.Values[helpers.PrevURLKey] = nil
-				err := session.Save(r, w)
-
+					err := session.Save(r, w)
+					if err != nil {
+						helpers.LogError(err.Error(), component)
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					_, err = fmt.Fprintf(w, "Success")
+					if err != nil {
+						helpers.LogError(err.Error(), component)
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+					}
+					return
+				}
+				_, err := fmt.Fprintf(w, "Invalid username or password")
 				if err != nil {
 					helpers.LogError(err.Error(), component)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
 				}
-
-				http.Redirect(w, r, prevURL.(string), http.StatusFound)
 				return
 			}
-
-			err := session.Save(r, w)
-			if err != nil {
-				helpers.LogError(err.Error(), component)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			http.Redirect(w, r, "/Jizzberry/home", http.StatusFound)
-			return
 		}
-
-		err := helpers.Render(w, http.StatusOK, "login", Context{Error: "Couldn't validate"})
-		if err != nil {
-			helpers.LogError(err.Error(), component)
-		}
-		return
-	}
-	err = helpers.Render(w, http.StatusOK, "login", nil)
-	if err != nil {
-		helpers.LogError(err.Error(), component)
 	}
 }
 
@@ -111,8 +102,11 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	http.Redirect(w, r, helpers.LoginURL, http.StatusFound)
+	_, err = fmt.Fprintf(w, "success")
+	if err != nil {
+		helpers.LogError(err.Error(), component)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func userIsValid(username string, password string) bool {
