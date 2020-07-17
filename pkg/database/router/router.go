@@ -7,13 +7,12 @@ import (
 )
 
 func GetDatabase(table string) string {
-	var databaseDir = helpers.GetWorkingDirectory() + "/assets/database"
 	switch table {
 
 	case "auth":
-		return filepath.FromSlash(databaseDir + "/auth.db")
+		return filepath.FromSlash(helpers.DatabasePath + "/auth.db")
 	}
 
-	file, _ := ioutil.TempFile(databaseDir, "/tmp.db")
+	file, _ := ioutil.TempFile(helpers.DatabasePath, "/tmp.db")
 	return file.Name()
 }

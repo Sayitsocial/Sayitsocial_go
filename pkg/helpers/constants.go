@@ -3,14 +3,11 @@ package helpers
 import "path/filepath"
 
 var (
-	configPath    string
-	ThumbnailPath string
-	DatabasePath  string
-	JsonPath      string
-	FFMPEGPath    string
-	LogsPath      string
-	StaticPath    string
-	TemplatePath  string
+	configPath   string
+	LogsPath     string
+	StaticPath   string
+	TemplatePath string
+	DatabasePath string
 )
 
 const (
@@ -26,11 +23,8 @@ const (
 
 func initPaths() {
 	configPath = GetWorkingDirectory()
-	ThumbnailPath = filepath.Join(GetWorkingDirectory(), "assets/thumbnails")
-	DatabasePath = filepath.Join(GetWorkingDirectory(), "assets/database")
-	JsonPath = filepath.Join(GetWorkingDirectory(), "assets/json")
-	FFMPEGPath = filepath.Join(GetWorkingDirectory(), "assets/ffmpeg")
 	LogsPath = filepath.Join(GetWorkingDirectory(), "logs")
 	StaticPath = filepath.Join(GetWorkingDirectory(), "web/templates/static")
 	TemplatePath = filepath.Join(GetWorkingDirectory(), "web/templates/Components")
+	DatabasePath = filepath.Join(GetWorkingDirectory(), "database")
 }

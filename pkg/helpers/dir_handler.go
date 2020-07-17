@@ -6,7 +6,11 @@ import (
 )
 
 func CreateDirs() error {
-	err := makeDir(filepath.FromSlash(LogsPath))
+	err := makeDir(filepath.FromSlash(DatabasePath))
+	if err != nil {
+		return err
+	}
+	err = makeDir(filepath.FromSlash(LogsPath))
 	if err != nil {
 		return err
 	}

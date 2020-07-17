@@ -42,7 +42,7 @@ func initHelpers() error {
 }
 
 func initWebApp() error {
-	addr := flag.String("addr", ":8000", "Address of server [default :6969]")
+	addr := flag.String("addr", ":8000", "Address of server [default :8000]")
 	flag.Parse()
 
 	router := mux.NewRouter()
