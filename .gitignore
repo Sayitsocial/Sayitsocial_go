@@ -1,7 +1,6 @@
 *Sayitsocial_go*
 web/
 *.sh
-*pkged.go
 config*
 *.db
 *.log
