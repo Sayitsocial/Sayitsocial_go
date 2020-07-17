@@ -22,7 +22,7 @@ func RegisterApps(r *mux.Router) {
 }
 
 func RegisterFileServer(r *mux.Router) {
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/",
-		http.FileServer(http.Dir(helpers.StaticPath)),
-	))
+	r.PathPrefix("/").Handler(
+		http.FileServer(http.Dir(helpers.TemplatePath)),
+	)
 }
