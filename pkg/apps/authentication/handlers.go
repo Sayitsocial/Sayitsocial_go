@@ -27,6 +27,8 @@ var SessionsStore = sessions.NewCookieStore(helpers.GetSessionsKey())
 func (a Authentication) Register(r *mux.Router) {
 	authRouter := r.PathPrefix(baseURL).Subrouter()
 
+	authRouter.StrictSlash(false)
+
 	authRouter.HandleFunc("/login-verify/", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout/", logoutHandler).Methods("POST")
 	authRouter.HandleFunc("/create/", newUser).Methods("POST")
