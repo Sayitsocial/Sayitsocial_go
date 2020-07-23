@@ -161,27 +161,22 @@ func ValidateSession(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func newUser(w http.ResponseWriter, r *http.Request) {
-	if !ValidateSession(w, r) && IsAdminFromSession(r) {
-		return
+	queryParams := r.URL.Query()
+	if userval, ok := queryParams[helpers.UsernameKey]; ok && len(userval) > 0 {
+		if passval, ok := queryParams[helpers.PasswordKey]; ok && len(passval) > 0 {
+			username := userval[0]
+			password := passval[0]
+
+			model := auth.Initialize()
+			defer model.Close()
+
+			model.Create(auth.Auth{
+				Username: username,
+				Password: password,
+				IsAdmin:  false,
+			})
+		}
 	}
-
-	err := r.ParseForm()
-	if err != nil {
-		helpers.LogError(err.Error(), component)
-	}
-
-	username := r.FormValue(helpers.UsernameKey)
-	password := r.FormValue(helpers.PasswordKey)
-	admin := r.FormValue("isAdmin")
-
-	model := auth.Initialize()
-	defer model.Close()
-
-	model.Create(auth.Auth{
-		Username: username,
-		Password: password,
-		IsAdmin:  admin == "on",
-	})
 }
 
 func GetUsernameFromSession(r *http.Request) string {
