@@ -30,6 +30,7 @@ func (a Authentication) Register(r *mux.Router) {
 	authRouter.HandleFunc("/login-verify/", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout/", logoutHandler).Methods("POST")
 	authRouter.HandleFunc("/create/", newUser).Methods("POST")
+	authRouter.HandleFunc("/isLogged/", isLogged).Methods("GET")
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,6 +177,14 @@ func newUser(w http.ResponseWriter, r *http.Request) {
 				IsAdmin:  false,
 			})
 		}
+	}
+}
+
+func isLogged(w http.ResponseWriter, r *http.Request) {
+	ok := ValidateSession(w, r)
+	_, err := fmt.Fprintf(w, "%v", ok)
+	if err != nil {
+		helpers.LogError(err.Error(), component)
 	}
 }
 
