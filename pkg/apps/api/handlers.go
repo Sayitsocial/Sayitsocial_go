@@ -1,8 +1,9 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -23,7 +24,12 @@ func (a Api) Register(r *mux.Router) {
 }
 
 func dummyHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := fmt.Fprintf(w, "Success")
+	model := auth.Initialize()
+	defer model.Close()
+
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "\t")
+	err := encoder.Encode(model.Get(auth.Auth{}))
 	if err != nil {
 		helpers.LogError(err.Error(), component)
 	}
