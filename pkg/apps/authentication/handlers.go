@@ -173,11 +173,20 @@ func newUser(w http.ResponseWriter, r *http.Request) {
 			model := auth.Initialize()
 			defer model.Close()
 
-			model.Create(auth.Auth{
+			if val := model.Get(auth.Auth{Username: username}); len(val) > 0 {
+				http.Error(w, helpers.UserAlreadyExistsError, http.StatusInternalServerError)
+				return
+			}
+
+			err := model.Create(auth.Auth{
 				Username: username,
 				Password: password,
 				IsAdmin:  false,
 			})
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		}
 	}
 }

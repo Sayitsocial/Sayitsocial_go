@@ -19,6 +19,8 @@ const (
 
 	RowStructTag = "row"
 	PKStructTag  = "pk"
+
+	UserAlreadyExistsError = "user already exists"
 )
 
 func initPaths() {

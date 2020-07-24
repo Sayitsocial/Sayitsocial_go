@@ -35,15 +35,16 @@ func (a Model) Close() {
 	}
 }
 
-func (a Model) Create(auth Auth) {
+func (a Model) Create(auth Auth) error {
 	auth.Password = hashPassword(auth.Password)
 
 	query, args := models.QueryBuilderCreate(auth, tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		return err
 	}
+	return nil
 }
 
 func (a Model) Get(auth Auth) (allAuth []Auth) {
