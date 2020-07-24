@@ -31,7 +31,7 @@ func (a Authentication) Register(r *mux.Router) {
 
 	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
-	authRouter.HandleFunc("/create", newUser).Methods("POST")
+	authRouter.HandleFunc("/create", newUser).Methods("POST", "GET")
 	authRouter.HandleFunc("/isLogged", isLogged).Methods("GET")
 }
 

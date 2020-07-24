@@ -5,8 +5,10 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/apps"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
 )
 
 func Init() error {
@@ -46,13 +48,14 @@ func initWebApp() error {
 	flag.Parse()
 
 	router := mux.NewRouter()
+	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 
 	apps.RegisterFileServer(router)
 	apps.RegisterApps(router)
 
 	helpers.LogInfo("Server starting at "+*addr, "Web")
 
-	err := http.ListenAndServe(*addr, router)
+	err := http.ListenAndServe(*addr, loggedRouter)
 	if err != nil {
 		return err
 	}
