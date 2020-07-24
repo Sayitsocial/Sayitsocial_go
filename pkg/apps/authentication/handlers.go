@@ -29,10 +29,10 @@ func (a Authentication) Register(r *mux.Router) {
 
 	authRouter.StrictSlash(false)
 
-	authRouter.HandleFunc("/login/", loginHandler).Methods("POST")
-	authRouter.HandleFunc("/logout/", logoutHandler).Methods("POST")
-	authRouter.HandleFunc("/create/", newUser).Methods("POST")
-	authRouter.HandleFunc("/isLogged/", isLogged).Methods("GET")
+	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
+	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
+	authRouter.HandleFunc("/create", newUser).Methods("POST")
+	authRouter.HandleFunc("/isLogged", isLogged).Methods("GET")
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
