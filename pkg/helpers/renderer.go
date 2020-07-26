@@ -24,7 +24,7 @@ func parseTemplates() *template.Template {
 	t := template.New("")
 	tmp := ""
 
-	err := filepath.Walk(TemplatePath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(StaticPath, func(path string, info os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".html" {
 			open, err := os.Open(path)
 			if err != nil {

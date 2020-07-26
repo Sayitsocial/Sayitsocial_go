@@ -3,18 +3,17 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/router"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	_ "github.com/lib/pq"
 	"github.com/markbates/pkger"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/rubenv/sql-migrate"
 )
 
 const component = "database"
 
-func GetConn(databasePath string) *sql.DB {
+func GetConn() *sql.DB {
 
-	conn, err := sql.Open("sqlite3", databasePath)
+	conn, err := sql.Open("postgres", helpers.PgConnString)
 
 	if err != nil {
 		helpers.LogError(err.Error(), component)
@@ -24,23 +23,21 @@ func GetConn(databasePath string) *sql.DB {
 }
 
 func RunMigrations() error {
-	authDatabasepath := router.GetDatabase("auth")
-
 	migrationsAuth := &migrate.HttpFileSystemMigrationSource{
-		FileSystem: pkger.Dir("/pkg/database/migrations/auth"),
+		FileSystem: pkger.Dir("/pkg/database/migrations/"),
 	}
 
-	err := doMigrate(migrationsAuth, authDatabasepath)
+	err := doMigrate(migrationsAuth)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func doMigrate(migrations *migrate.HttpFileSystemMigrationSource, databasePath string) error {
-	conn := GetConn(databasePath)
+func doMigrate(migrations *migrate.HttpFileSystemMigrationSource) error {
+	conn := GetConn()
 
-	n, err := migrate.Exec(conn, "sqlite3", migrations, migrate.Up)
+	n, err := migrate.Exec(conn, "postgres", migrations, migrate.Up)
 
 	if err != nil {
 		return err
@@ -51,6 +48,6 @@ func doMigrate(migrations *migrate.HttpFileSystemMigrationSource, databasePath s
 		return err
 	}
 
-	helpers.LogInfo(fmt.Sprintf("Applied %d migrations in %s", n, databasePath), component)
+	helpers.LogInfo(fmt.Sprintf("Applied %d migrations", n), component)
 	return nil
 }

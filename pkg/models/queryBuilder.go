@@ -4,15 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/router"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"reflect"
 	"regexp"
+	"strconv"
 )
 
 const component = "QueryBuilder"
 
-func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
+func QueryBuilderGet(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
 	query := `SELECT `
@@ -36,25 +36,25 @@ func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 		}
 	}
 
-	query += " FROM " + tableName
+	query += " FROM " + fmt.Sprintf("%s.%s", schemaName, tableName)
 	if searchByRow == "" {
 		return query, nil
 	}
 
 	if t.Field(searchByIndex).Tag.Get("type") == "exact" {
-		query += " WHERE " + searchByRow + " = ?"
+		query += " WHERE " + searchByRow + " = $1"
 	} else if t.Field(searchByIndex).Tag.Get("type") == "like" {
-		query += " WHERE " + searchByRow + " LIKE ? COLLATE NOCASE"
+		query += " WHERE " + searchByRow + " LIKE $1 COLLATE NOCASE"
 	}
 	args := []interface{}{v.Field(searchByIndex).Interface()}
 
 	return query, args
 }
 
-func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{}) {
+func QueryBuilderCreate(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
-	query := `INSERT INTO ` + tableName + "("
+	query := `INSERT INTO ` + fmt.Sprintf("%s.%s", schemaName, tableName) + "("
 
 	var valuesCount = 0
 	args := make([]interface{}, 0)
@@ -80,9 +80,9 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 	query += ") values("
 	for i := 0; i < valuesCount; i++ {
 		if i < valuesCount-1 {
-			query += "?, "
+			query += "$" + strconv.Itoa(i+1) + ", "
 		} else {
-			query += "?"
+			query += "$" + strconv.Itoa(i+1)
 		}
 	}
 
@@ -91,10 +91,10 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 	return query, args
 }
 
-func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
+func QueryBuilderDelete(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
-	query := `DELETE FROM ` + tableName + " WHERE "
+	query := `DELETE FROM ` + fmt.Sprintf("%s.%s", schemaName, tableName) + " WHERE "
 
 	args := make([]interface{}, 0)
 
@@ -103,7 +103,7 @@ func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{})
 		if !checkEmpty(v.Field(i)) {
 			row := t.Field(i).Tag.Get(helpers.RowStructTag)
 			if row != "" {
-				query += row + " = ?"
+				query += row + " = $1"
 				args = append(args, v.Field(i).Interface())
 				return query, args
 			}
@@ -112,12 +112,12 @@ func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{})
 	return "", nil
 }
 
-func QueryBuilderUpdate(i interface{}, tableName string) (string, []interface{}) {
+func QueryBuilderUpdate(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
 
 	var searchBy int
-	query := `UPDATE ` + tableName + " SET "
+	query := `UPDATE ` + fmt.Sprintf("%s.%s", schemaName, tableName) + " SET "
 	args := make([]interface{}, 0)
 
 	argsCount := 0
@@ -131,9 +131,9 @@ func QueryBuilderUpdate(i interface{}, tableName string) (string, []interface{})
 		row := t.Field(i).Tag.Get(helpers.RowStructTag)
 		if row != "" {
 			if argsCount < 1 {
-				query += row + " = ?"
+				query += row + " = $" + strconv.Itoa(i+1)
 			} else {
-				query += " ," + row + " = ?"
+				query += " ," + row + " = $" + strconv.Itoa(i+1)
 			}
 			args = append(args, v.Field(i).Interface())
 			argsCount++
@@ -145,7 +145,7 @@ func QueryBuilderUpdate(i interface{}, tableName string) (string, []interface{})
 		return "", nil
 	}
 
-	query += " WHERE " + t.Field(searchBy).Tag.Get(helpers.RowStructTag) + " = ?"
+	query += " WHERE " + t.Field(searchBy).Tag.Get(helpers.RowStructTag) + " = $" + strconv.Itoa(argsCount+1)
 	args = append(args, v.Field(searchBy).Interface())
 
 	return query, args
@@ -190,8 +190,8 @@ func scanSingleStruct(dest reflect.Value, row *sql.Rows) reflect.Value {
 	return ind
 }
 
-func IsTableEmpty(tableName string, conn *sql.DB) {
-	rows, err := conn.Query(`SELECT count(name) FROM sqlite_master WHERE type='table' and name=?`, tableName)
+func IsTableEmpty(schemaName string, tableName string, conn *sql.DB) {
+	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schemaName, tableName)
 
 	if err != nil {
 		helpers.LogError(err.Error(), component)
@@ -201,15 +201,15 @@ func IsTableEmpty(tableName string, conn *sql.DB) {
 		}
 		return
 	}
-	var count int
+	var exists bool
 	for rows.Next() {
-		err := rows.Scan(&count)
+		err := rows.Scan(&exists)
 		if err != nil {
 			helpers.LogError(err.Error(), component)
 		}
 	}
 
-	if count < 0 {
+	if !exists {
 		err := database.RunMigrations()
 		if err != nil {
 			helpers.LogError(err.Error(), component)
@@ -279,8 +279,8 @@ func isPK(field reflect.StructField) bool {
 	return field.Tag.Get(helpers.PKStructTag) == "auto"
 }
 
-func GetConn(table string) *sql.DB {
-	conn := database.GetConn(router.GetDatabase(table))
-	IsTableEmpty(table, conn)
+func GetConn(schema string, table string) *sql.DB {
+	conn := database.GetConn()
+	IsTableEmpty(schema, table, conn)
 	return conn
 }

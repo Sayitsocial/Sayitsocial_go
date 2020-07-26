@@ -8,14 +8,15 @@ import (
 )
 
 const (
-	tableName = "auth"
+	tableName = helpers.DbTableAuth
+	schema    = helpers.DbSchemaAuth
 	component = "authModel"
 )
 
 type Auth struct {
-	Username string `row:"username" type:"exact"`
-	Password string `row:"password" type:"exact"`
-	IsAdmin  bool   `row:"isadmin" type:"exact"`
+	Username   string `row:"username" type:"exact"`
+	Password   string `row:"password" type:"exact"`
+	TypeOfUser string `row:"typeOfUser" type:"exact"`
 }
 
 type Model struct {
@@ -24,7 +25,7 @@ type Model struct {
 
 func Initialize() *Model {
 	return &Model{
-		conn: models.GetConn(tableName),
+		conn: models.GetConn(schema, tableName),
 	}
 }
 
@@ -38,7 +39,7 @@ func (a Model) Close() {
 func (a Model) Create(auth Auth) error {
 	auth.Password = hashPassword(auth.Password)
 
-	query, args := models.QueryBuilderCreate(auth, tableName)
+	query, args := models.QueryBuilderCreate(auth, schema, tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
@@ -48,7 +49,7 @@ func (a Model) Create(auth Auth) error {
 }
 
 func (a Model) Get(auth Auth) (allAuth []Auth) {
-	query, args := models.QueryBuilderGet(auth, tableName)
+	query, args := models.QueryBuilderGet(auth, schema, tableName)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {

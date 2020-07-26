@@ -30,7 +30,13 @@ func ConfigInit() error {
 
 func writeInitial() error {
 	if string(GetSessionsKey()) == "" {
-		viper.Set("sessionsKey", GenerateRandomKey(50))
+		viper.Set("sessionsKey", GenerateRandomKey(64))
+		err := write()
+		return err
+	}
+
+	if string(GetEncryptionKey()) == "" {
+		viper.Set("encryptionkey", GenerateRandomKey(32))
 		err := write()
 		return err
 	}
@@ -39,6 +45,10 @@ func writeInitial() error {
 
 func GetSessionsKey() []byte {
 	return []byte(viper.GetString("sessionsKey"))
+}
+
+func GetEncryptionKey() []byte {
+	return []byte(viper.GetString("encryptionkey"))
 }
 
 func write() error {

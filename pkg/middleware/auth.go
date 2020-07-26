@@ -21,7 +21,7 @@ func AuthMiddleware() mux.MiddlewareFunc {
 				if err != nil {
 					helpers.LogError(err.Error(), component)
 				}
-				http.Redirect(w, r, "/auth/login/", http.StatusFound)
+				http.Redirect(w, r, helpers.LoginURL, http.StatusFound)
 			}
 		})
 	}
