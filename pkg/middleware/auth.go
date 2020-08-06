@@ -9,7 +9,7 @@ import (
 
 const component = "Middleware"
 
-func AuthMiddleware() mux.MiddlewareFunc {
+func CookieAuthMiddleware() mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if authentication.ValidateSession(w, r) {
