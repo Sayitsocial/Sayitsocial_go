@@ -37,11 +37,15 @@ const (
 
 	HttpSuccessMessage = "success"
 
-	DbSchemaAuth = "auth"
-	DbSchemaOrg  = "organisation"
+	DbSchemaAuth   = "auth"
+	DbSchemaOrg    = "organisation"
+	DbSchemaVol    = "volunteer"
+	DbSchemaBridge = "bridge"
 
 	DbTableAuth             = "auth"
 	DbTableOrganisationData = "organisation"
+	DbTableVolunteerData    = "volunteer"
+	DbTableVolOrgBridge     = "volorg"
 )
 
 func initPaths() {

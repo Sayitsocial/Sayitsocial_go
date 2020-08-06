@@ -1,6 +1,7 @@
 -- +migrate Up
 CREATE TABLE IF NOT EXISTS organisation.organisation (
-                                        display_name varchar primary key,
+                                        organisation_id varchar primary key NOT NULL,
+                                        display_name varchar,
                                         locality varchar,
                                         registration_no  varchar,
                                         contact_email varchar,

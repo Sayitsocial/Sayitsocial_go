@@ -9,10 +9,11 @@ import (
 const (
 	tableName = helpers.DbTableOrganisationData
 	schema    = helpers.DbSchemaOrg
-	component = "authModel"
+	component = "orgModel"
 )
 
 type OrgData struct {
+	OrganisationID string `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
 	DisplayName    string `row:"display_name" type:"like" json:"display_name"`
 	Locality       string `row:"locality" type:"like" json:"locality"`
 	RegistrationNo string `row:"registration_no" type:"exact" json:"registration_no"`

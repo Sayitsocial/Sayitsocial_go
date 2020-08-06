@@ -1,13 +1,10 @@
 -- +migrate Up
 CREATE TABLE IF NOT EXISTS volunteer.volunteer (
-                                                         display_name varchar primary key,
-                                                         locality varchar,
-                                                         registration_no  varchar,
+                                                         volunteer_id varchar primary key NOT NULL,
+                                                         display_name varchar ,
                                                          contact_email varchar,
                                                          contact_phone varchar,
-                                                         description varchar,
-                                                         owner varchar,
-                                                         achievements varchar
+                                                         bio varchar
 
 
 );
