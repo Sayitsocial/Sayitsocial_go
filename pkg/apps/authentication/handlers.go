@@ -180,8 +180,6 @@ func newUser(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fmt.Println(typeOfUser)
-
 			model := auth.Initialize()
 			defer model.Close()
 

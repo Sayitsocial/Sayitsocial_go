@@ -8,7 +8,7 @@ import (
 
 const (
 	tableName = helpers.DbTableVolunteerData
-	schema    = helpers.DbSchemaOrg
+	schema    = helpers.DbSchemaVol
 	component = "volModel"
 )
 
