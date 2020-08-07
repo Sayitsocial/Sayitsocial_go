@@ -10,7 +10,6 @@ import (
 const (
 	tableName = helpers.DbTableAuth
 	schema    = helpers.DbSchemaAuth
-	component = "authModel"
 )
 
 type Auth struct {
@@ -32,7 +31,7 @@ func Initialize() *Model {
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -53,7 +52,7 @@ func (a Model) Get(auth Auth) (allAuth []Auth) {
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return
 	}
 
@@ -64,7 +63,7 @@ func (a Model) Get(auth Auth) (allAuth []Auth) {
 func hashPassword(password string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 
 	return string(hash)

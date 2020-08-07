@@ -9,7 +9,6 @@ import (
 const (
 	tableName = helpers.DbTableOrganisationData
 	schema    = helpers.DbSchemaOrg
-	component = "orgModel"
 )
 
 type OrgData struct {
@@ -37,7 +36,7 @@ func Initialize() *Model {
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -56,7 +55,7 @@ func (a Model) Get(data OrgData) (orgData []OrgData) {
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return
 	}
 

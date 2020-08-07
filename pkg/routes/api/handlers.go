@@ -8,8 +8,6 @@ import (
 	"net/http"
 )
 
-const component = "API"
-
 type Api struct {
 }
 
@@ -23,7 +21,7 @@ func (a Api) Register(r *mux.Router) {
 	apiRouter.HandleFunc("/dummy", dummyHandler).Methods("GET")
 }
 
-func dummyHandler(w http.ResponseWriter, r *http.Request) {
+func dummyHandler(w http.ResponseWriter, _ *http.Request) {
 	model := auth.Initialize()
 	defer model.Close()
 
@@ -31,6 +29,6 @@ func dummyHandler(w http.ResponseWriter, r *http.Request) {
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(model.Get(auth.Auth{}))
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 }

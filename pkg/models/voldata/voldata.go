@@ -9,7 +9,6 @@ import (
 const (
 	tableName = helpers.DbTableVolunteerData
 	schema    = helpers.DbSchemaVol
-	component = "volModel"
 )
 
 type VolData struct {
@@ -33,7 +32,7 @@ func Initialize() *Model {
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -52,7 +51,7 @@ func (a Model) Get(data VolData) (volData []VolData) {
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return
 	}
 

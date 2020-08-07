@@ -11,8 +11,6 @@ import (
 	"strconv"
 )
 
-const component = "QueryBuilder"
-
 const (
 	AutoPK   = "auto"
 	ManualPK = "manual"
@@ -184,12 +182,12 @@ func GetIntoStruct(rows *sql.Rows, dest interface{}) {
 	direct := reflect.Indirect(v)
 
 	if v.Kind() != reflect.Ptr {
-		helpers.LogError("Destination not pointer", component)
+		helpers.LogError("Destination not pointer")
 		return
 	}
 
 	if direct.Kind() != reflect.Slice {
-		helpers.LogError("Destination not slice", component)
+		helpers.LogError("Destination not slice")
 		return
 	}
 
@@ -213,7 +211,7 @@ func scanSingleStruct(dest reflect.Value, row *sql.Rows) reflect.Value {
 
 	err := row.Scan(ptrs...)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 	return ind
 }
@@ -222,10 +220,10 @@ func IsTableEmpty(schemaName string, tableName string, conn *sql.DB) {
 	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schemaName, tableName)
 
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		err := database.RunMigrations()
 		if err != nil {
-			helpers.LogError(err.Error(), component)
+			helpers.LogError(err.Error())
 		}
 		return
 	}
@@ -233,14 +231,14 @@ func IsTableEmpty(schemaName string, tableName string, conn *sql.DB) {
 	for rows.Next() {
 		err := rows.Scan(&exists)
 		if err != nil {
-			helpers.LogError(err.Error(), component)
+			helpers.LogError(err.Error())
 		}
 	}
 
 	if !exists {
 		err := database.RunMigrations()
 		if err != nil {
-			helpers.LogError(err.Error(), component)
+			helpers.LogError(err.Error())
 		}
 	}
 }
@@ -249,7 +247,7 @@ func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName stri
 	rows, err := conn.Query(fmt.Sprintf(`SELECT generated_id FROM %s WHERE  %s=?`, tableName, keyname), key)
 
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return false, -1
 	}
 
@@ -257,7 +255,7 @@ func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName stri
 	for rows.Next() {
 		err := rows.Scan(&genId)
 		if err != nil {
-			helpers.LogError(err.Error(), component)
+			helpers.LogError(err.Error())
 		}
 	}
 
@@ -272,7 +270,7 @@ func checkEmpty(value reflect.Value) bool {
 	// Checks int
 	matchedInt, err := regexp.MatchString("int", value.Type().String())
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return false
 	}
 	if matchedInt {
@@ -282,7 +280,7 @@ func checkEmpty(value reflect.Value) bool {
 	//else check string
 	matchedString, err := regexp.MatchString("string", value.Type().String())
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return false
 	}
 	if matchedString {
@@ -292,7 +290,7 @@ func checkEmpty(value reflect.Value) bool {
 	//else check bool
 	matchedBool, err := regexp.MatchString("bool", value.Type().String())
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return false
 	}
 	if matchedBool {

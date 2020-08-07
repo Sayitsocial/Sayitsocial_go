@@ -1,10 +1,10 @@
-package apps
+package routes
 
 import (
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/apps/api"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/apps/authentication"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/apps/sayitsocial"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/api"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/authentication"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/sayitsocial"
 	"github.com/gorilla/mux"
 	"net/http"
 )
