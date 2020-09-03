@@ -14,4 +14,5 @@ func (s Sayitsocial) Register(r *mux.Router) {
 	htmlRouter.StrictSlash(true)
 
 	//htmlRouter.Use(middleware.AuthMiddleware())
+
 }

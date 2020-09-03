@@ -1,8 +1,9 @@
 -- +migrate Up
 CREATE TABLE IF NOT EXISTS auth.auth (
-                                        username varchar primary key,
-                                        password varchar,
-                                        typeOfUser varchar
+    uid varchar primary key,
+    username varchar unique NOT NULL ,
+    password varchar NOT NULL ,
+    typeOfUser varchar NOT NULL
 
 );
 

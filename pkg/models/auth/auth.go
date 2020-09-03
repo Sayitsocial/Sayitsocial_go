@@ -13,6 +13,7 @@ const (
 )
 
 type Auth struct {
+	UID        string `row:"uid" type:"exact"`
 	Username   string `row:"username" type:"exact"`
 	Password   string `row:"password" type:"exact"`
 	TypeOfUser string `row:"typeOfUser" type:"exact"`

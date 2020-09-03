@@ -1,15 +1,18 @@
 package authentication
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"net/url"
 )
+
+var decoder = schema.NewDecoder()
 
 type Authentication struct {
 }
@@ -32,10 +35,25 @@ func (a Authentication) Register(r *mux.Router) {
 
 	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
-	authRouter.HandleFunc("/create", newUser).Methods("POST", "GET")
 	authRouter.HandleFunc("/isLogged", isLogged).Methods("GET")
 }
 
+// swagger:route POST /auth/login auth login
+//
+// Login to existing account
+//
+//
+//     Consumes:
+//     - application/json
+//
+//
+//     Schemes: http
+//
+//
+//     Security:
+//
+//     Responses:
+//       200: successResponse
 /*
  * Handles authenticating user and displaying login page
  * Should redirect to respective page
@@ -53,19 +71,26 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 
-	queryParams := r.URL.Query()
-
 	err := r.ParseForm()
 	if err != nil {
 		helpers.LogError(err.Error())
+		return
 	}
 
-	if username, password := getCredsFromQuery(queryParams); username != "" && password == "" {
+	var creds LoginReq
+	err = decoder.Decode(&creds, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if creds.Username != "" && creds.Password == "" {
 		var typeOfUser string
-		if userIsValid(username, password, &typeOfUser) {
+		if userIsValid(creds.Username, creds.Password, &typeOfUser) {
 
 			// Since session key is randomly hashed, its value doesn't matter
-			session.Values[helpers.UsernameKey] = username
+			session.Values[helpers.UsernameKey] = creds.Username
 
 			// TODO: Set proper max age
 			session.Options.MaxAge = 30 * 60
@@ -90,15 +115,34 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// TODO: Should display error on page
-		_, err := fmt.Fprintf(w, helpers.InvalidCredentialsError)
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		err := encoder.Encode(&invalidCredentialsError{
+			Body: Body{Message: helpers.InvalidCredentialsError},
+		})
 		if err != nil {
 			helpers.LogError(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 }
 
+// swagger:route POST /auth/logout auth logout
+//
+// Login to existing account
+//
+//
+//     Consumes:
+//     - application/json
+//
+//
+//     Schemes: http
+//
+//
+//     Security:
+//
+//     Responses:
+//       200: successResponse
 // Deletes session on logout
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := SessionsStore.Get(r, helpers.SessionsKey)
@@ -180,55 +224,6 @@ func ValidateSession(w http.ResponseWriter, r *http.Request) bool {
 		}
 	}
 	return false
-}
-
-// Create new user from url
-func newUser(w http.ResponseWriter, r *http.Request) {
-	queryParams := r.URL.Query()
-
-	if authType, ok := queryParams[helpers.AuthTypeKey]; ok && len(authType) > 0 {
-		if username, password := getCredsFromQuery(queryParams); username != "" && password != "" {
-			var typeOfUser string
-			switch authType[0] {
-			case helpers.AuthTypeOrg:
-				typeOfUser = helpers.AuthTypeOrg
-				break
-			case helpers.AuthTypeVol:
-				typeOfUser = helpers.AuthTypeVol
-				break
-			default:
-				http.Error(w, helpers.InvalidUserTypeError, http.StatusInternalServerError)
-				return
-			}
-
-			model := auth.Initialize()
-			defer model.Close()
-
-			if val := model.Get(auth.Auth{Username: username}); len(val) > 0 {
-				http.Error(w, helpers.UserAlreadyExistsError, http.StatusInternalServerError)
-				return
-			}
-
-			if err := model.Create(auth.Auth{
-				Username:   username,
-				Password:   password,
-				TypeOfUser: typeOfUser,
-			}); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-	}
-}
-
-func getCredsFromQuery(queryParams url.Values) (username string, password string) {
-	if userval, ok := queryParams[helpers.UsernameKey]; ok && len(userval) > 0 {
-		if passval, ok := queryParams[helpers.PasswordKey]; ok && len(passval) > 0 {
-			username = userval[0]
-			password = passval[0]
-		}
-	}
-	return
 }
 
 func isLogged(w http.ResponseWriter, r *http.Request) {

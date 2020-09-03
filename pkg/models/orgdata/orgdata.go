@@ -21,6 +21,7 @@ type OrgData struct {
 	Desc           string `row:"description" type:"like" json:"desc"`
 	Owner          string `row:"owner" type:"like" json:"owner"`
 	Achievements   string `row:"achievements" type:"like" json:"achievements"`
+	TypeOfOrg      int    `row:"type_of_org" type:"like" json:"type_of_org"`
 }
 
 type Model struct {

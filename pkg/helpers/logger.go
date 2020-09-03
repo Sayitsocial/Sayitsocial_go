@@ -33,7 +33,7 @@ func LoggerInit() {
 	logger.SetOutput(mWriter)
 }
 
-func LogError(message string) {
+func LogError(message interface{}) {
 	logger.WithFields(logrus.Fields{
 		"component": func() string {
 			pc, _, _, ok := runtime.Caller(2)
@@ -42,7 +42,7 @@ func LogError(message string) {
 	}).Error(message)
 }
 
-func LogInfo(message string) {
+func LogInfo(message interface{}) {
 	logger.WithFields(logrus.Fields{
 		"component": func() string {
 			pc, _, _, ok := runtime.Caller(2)
@@ -51,7 +51,7 @@ func LogInfo(message string) {
 	}).Info(message)
 }
 
-func LogWarning(message string) {
+func LogWarning(message interface{}) {
 	logger.WithFields(logrus.Fields{
 		"component": func() string {
 			pc, _, _, ok := runtime.Caller(2)
