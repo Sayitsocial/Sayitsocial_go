@@ -2,9 +2,9 @@ package initializer
 
 import (
 	"flag"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/apps"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -21,6 +21,8 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+
+	helpers.LogError("test")
 
 	err = initWebApp()
 	if err != nil {
@@ -50,10 +52,10 @@ func initWebApp() error {
 	router := mux.NewRouter()
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 
-	apps.RegisterFileServer(router)
-	apps.RegisterApps(router)
+	routes.RegisterFileServer(router)
+	routes.RegisterApps(router)
 
-	helpers.LogInfo("Server starting at "+*addr, "Web")
+	helpers.LogInfo("Server starting at " + *addr)
 
 	err := http.ListenAndServe(*addr, loggedRouter)
 	if err != nil {

@@ -9,14 +9,12 @@ import (
 	"github.com/rubenv/sql-migrate"
 )
 
-const component = "database"
-
 func GetConn() *sql.DB {
 
 	conn, err := sql.Open("postgres", helpers.PgConnString)
 
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 
 	return conn
@@ -48,6 +46,6 @@ func doMigrate(migrations *migrate.HttpFileSystemMigrationSource) error {
 		return err
 	}
 
-	helpers.LogInfo(fmt.Sprintf("Applied %d migrations", n), component)
+	helpers.LogInfo(fmt.Sprintf("Applied %d migrations", n))
 	return nil
 }

@@ -10,6 +10,7 @@ var (
 	configPath   string
 	LogsPath     string
 	StaticPath   string
+	SwaggerPath  string
 	DatabasePath string
 	PgConnString string
 )
@@ -17,7 +18,7 @@ var (
 const (
 	UsernameKey = "username"
 	PasswordKey = "password"
-	SessionsKey = "sessions"
+	SessionsKey = "SESSIONID"
 	PrevURLKey  = "prevurl"
 	AuthTypeKey = "type"
 
@@ -37,11 +38,15 @@ const (
 
 	HttpSuccessMessage = "success"
 
-	DbSchemaAuth = "auth"
-	DbSchemaOrg  = "organisation"
+	DbSchemaAuth   = "auth"
+	DbSchemaOrg    = "organisation"
+	DbSchemaVol    = "volunteer"
+	DbSchemaBridge = "bridge"
 
 	DbTableAuth             = "auth"
 	DbTableOrganisationData = "organisation"
+	DbTableVolunteerData    = "volunteer"
+	DbTableVolOrgBridge     = "volorg"
 )
 
 func initPaths() {
@@ -49,5 +54,6 @@ func initPaths() {
 	PgConnString = fmt.Sprintf("port=%s host=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("hostport"), os.Getenv("hostname"), os.Getenv("username"), os.Getenv("password"), os.Getenv("databasename"))
 	LogsPath = filepath.Join(GetWorkingDirectory(), "logs")
 	StaticPath = filepath.Join(GetWorkingDirectory(), "web/components")
+	SwaggerPath = filepath.Join(GetWorkingDirectory(), "web/swagger")
 	DatabasePath = filepath.Join(GetWorkingDirectory(), "database")
 }

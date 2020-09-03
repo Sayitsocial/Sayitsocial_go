@@ -9,10 +9,10 @@ import (
 const (
 	tableName = helpers.DbTableOrganisationData
 	schema    = helpers.DbSchemaOrg
-	component = "authModel"
 )
 
 type OrgData struct {
+	OrganisationID string `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
 	DisplayName    string `row:"display_name" type:"like" json:"display_name"`
 	Locality       string `row:"locality" type:"like" json:"locality"`
 	RegistrationNo string `row:"registration_no" type:"exact" json:"registration_no"`
@@ -21,6 +21,7 @@ type OrgData struct {
 	Desc           string `row:"description" type:"like" json:"desc"`
 	Owner          string `row:"owner" type:"like" json:"owner"`
 	Achievements   string `row:"achievements" type:"like" json:"achievements"`
+	TypeOfOrg      int    `row:"type_of_org" type:"like" json:"type_of_org"`
 }
 
 type Model struct {
@@ -36,7 +37,7 @@ func Initialize() *Model {
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -55,7 +56,7 @@ func (a Model) Get(data OrgData) (orgData []OrgData) {
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
-		helpers.LogError(err.Error(), component)
+		helpers.LogError(err.Error())
 		return
 	}
 

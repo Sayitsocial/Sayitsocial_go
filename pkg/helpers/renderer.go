@@ -45,12 +45,12 @@ func parseTemplates() *template.Template {
 	})
 
 	if err != nil {
-		LogError(err.Error(), component)
+		LogError(err.Error())
 	}
 
 	_, err = t.Parse(tmp)
 	if err != nil {
-		LogError(err.Error(), component)
+		LogError(err.Error())
 	}
 	return t
 }
