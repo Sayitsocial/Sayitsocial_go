@@ -4,7 +4,6 @@ type Body struct {
 	// The validation message
 	//
 	// Required: true
-	// Example: Expected type int
 	Message string `json:"message"`
 }
 
