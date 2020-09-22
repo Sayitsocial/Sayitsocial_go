@@ -3,10 +3,11 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	_ "github.com/lib/pq"
-	"github.com/markbates/pkger"
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 )
 
 func GetConn() *sql.DB {
@@ -22,7 +23,7 @@ func GetConn() *sql.DB {
 
 func RunMigrations() error {
 	migrationsAuth := &migrate.HttpFileSystemMigrationSource{
-		FileSystem: pkger.Dir("/pkg/database/migrations/"),
+		FileSystem: http.Dir("./pkg/database/migrations/"),
 	}
 
 	err := doMigrate(migrationsAuth)

@@ -1,6 +1,8 @@
 *Sayitsocial_go*
-../web/
 *.sh
 config*
 *.db
 *.log
+*.vscode
+*.history
+*.env
