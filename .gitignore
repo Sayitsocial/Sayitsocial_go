@@ -6,3 +6,4 @@ config*
 *.vscode
 *.history
 *.env
+*.out
