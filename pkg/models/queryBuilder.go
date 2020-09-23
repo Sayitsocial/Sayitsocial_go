@@ -26,7 +26,7 @@ type tmpHolder struct {
 	value  reflect.Value
 }
 
-func getAllMembers(inte interface{}, tableName string) string {
+func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
 
@@ -34,17 +34,22 @@ func getAllMembers(inte interface{}, tableName string) string {
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).Kind() == reflect.Struct {
 			if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
-				ret += getAllMembers(v.Field(i).Interface(), foreignTable)
+				ret += getAllMembers(v.Field(i).Interface(), foreignTable, false)
 			} else {
-				ret += getAllMembers(v.Field(i).Interface(), tableName)
+				ret += getAllMembers(v.Field(i).Interface(), tableName, false)
 			}
 			continue
 		} else {
 			ret += fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 		}
-		ret += ", "
+		ret += ","
 	}
-	return ret[:len(ret)-1]
+	return func() string {
+		if isOuter {
+			return ret[:len(ret)-1]
+		}
+		return ret
+	}()
 }
 
 func getSearchBy(inte interface{}, tableName string) (totalSearchByCount int, searchBy []tmpHolder) {
@@ -64,12 +69,14 @@ func getSearchBy(inte interface{}, tableName string) (totalSearchByCount int, se
 			continue
 		}
 		if !checkEmpty(v.Field(i)) {
-			searchBy = append(searchBy, tmpHolder{
-				name:   fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag)),
-				typeOf: "exact",
-				value:  v.Field(i),
-			})
-			totalSearchByCount++
+			if val := t.Field(i).Tag.Get("type"); val != "" {
+				searchBy = append(searchBy, tmpHolder{
+					name:   fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag)),
+					typeOf: val,
+					value:  v.Field(i),
+				})
+				totalSearchByCount++
+			}
 		}
 	}
 	return
@@ -96,21 +103,21 @@ func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, 
 }
 
 // QueryBuilderGet generates normal get queries for non nested structures
-func QueryBuilderGet(i interface{}, schemaName string, tableName string) (string, []interface{}) {
-	query := `SELECT ` + getAllMembers(i, schemaName+"."+tableName)
+func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
+	query := `SELECT ` + getAllMembers(i, tableName, true)
 
-	args, where := getArgsWhere(getSearchBy(i, schemaName+"."+tableName))
-	query += " FROM " + fmt.Sprintf("%s.%s", schemaName, tableName)
+	args, where := getArgsWhere(getSearchBy(i, tableName))
+	query += " FROM " + tableName
 	query += where
 
 	return query, args
 }
 
 // QueryBuilderCreate generates normal create queries for non nested structures
-func QueryBuilderCreate(i interface{}, schemaName string, tableName string) (string, []interface{}) {
+func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
-	query := `INSERT INTO ` + fmt.Sprintf("%s.%s", schemaName, tableName) + "("
+	query := `INSERT INTO ` + tableName + "("
 
 	var valuesCount = 0
 	args := make([]interface{}, 0)
@@ -163,10 +170,10 @@ func QueryBuilderCreate(i interface{}, schemaName string, tableName string) (str
 }
 
 // QueryBuilderDelete generates normal delete queries for non nested structures
-func QueryBuilderDelete(i interface{}, schemaName string, tableName string) (string, []interface{}) {
+func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
-	query := `DELETE FROM ` + fmt.Sprintf("%s.%s", schemaName, tableName) + " WHERE "
+	query := "DELETE FROM " + tableName + " WHERE "
 
 	args := make([]interface{}, 0)
 
@@ -185,12 +192,12 @@ func QueryBuilderDelete(i interface{}, schemaName string, tableName string) (str
 }
 
 // QueryBuilderUpdate generates normal update queries for non nested structures
-func QueryBuilderUpdate(i interface{}, schemaName string, tableName string) (string, []interface{}) {
+func QueryBuilderUpdate(i interface{}, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
 
 	var searchBy int
-	query := `UPDATE ` + fmt.Sprintf("%s.%s", schemaName, tableName) + " SET "
+	query := `UPDATE ` + tableName + " SET "
 	args := make([]interface{}, 0)
 
 	argsCount := 0
@@ -231,24 +238,47 @@ func getInnerJoin(inte interface{}, tableName string) string {
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).Kind() == reflect.Struct {
 			ret += fmt.Sprintf(" INNER JOIN %s ON (%s.%s = %s.%s) ", t.Field(i).Tag.Get("fk"), tableName, t.Field(i).Tag.Get(helpers.RowStructTag), t.Field(i).Tag.Get("fk"), t.Field(i).Tag.Get("fr"))
+			ret += getInnerJoin(v.Field(i).Interface(), fmt.Sprintf("%s", t.Field(i).Tag.Get("fk")))
 		}
 	}
 	return ret
 }
 
 // QueryBuilderJoin generates get queries for nested structures with inner join support
-func QueryBuilderJoin(inte interface{}, schemaName string, tableName string) (string, []interface{}) {
-	query := `SELECT ` + getAllMembers(inte, schemaName+"."+tableName)
-
-	query += " FROM " + fmt.Sprintf("%s.%s", schemaName, tableName)
-
-	innerJoin := getInnerJoin(inte, schemaName+"."+tableName)
-	query += innerJoin
-
-	args, where := getArgsWhere(getSearchBy(inte, schemaName+"."+tableName))
-	query += where
-
+func QueryBuilderJoin(inte interface{}, tableName string) (string, []interface{}) {
+	args, where := getArgsWhere(getSearchBy(inte, tableName))
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s", getAllMembers(inte, tableName, true), tableName, getInnerJoin(inte, tableName), where)
 	return query, args
+}
+
+// QueryBuilderCount generates count queries for primary key in structure
+func QueryBuilderCount(inte interface{}, tableName string) (string, []interface{}) {
+	t := reflect.TypeOf(inte)
+	v := reflect.ValueOf(inte)
+
+	var pk string = "*"
+	for i := 0; i < v.NumField(); i++ {
+		if ok, val := isPK(t.Field(i)); ok {
+			pk = val
+			break
+		}
+	}
+	args, where := getArgsWhere(getSearchBy(inte, tableName))
+
+	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, tableName, where), args
+}
+
+func getPtrs(dest reflect.Value) []interface{} {
+	ptrs := make([]interface{}, 0)
+	for i := 0; i < dest.NumField(); i++ {
+		dd := reflect.Indirect(dest.Field(i))
+		if dd.Kind() == reflect.Struct {
+			ptrs = append(ptrs, getPtrs(dest.Field(i))...)
+			continue
+		}
+		ptrs = append(ptrs, dest.Field(i).Addr().Interface())
+	}
+	return ptrs
 }
 
 // GetIntoStruct scans rows into slice of struct
@@ -273,18 +303,32 @@ func GetIntoStruct(rows *sql.Rows, dest interface{}) {
 		vp := reflect.New(base)
 		vpInd := vp.Elem()
 
-		for i := 0; i < vpInd.NumField(); i++ {
-			dd := reflect.Indirect(vpInd.Field(i))
-			if dd.Kind() == reflect.Struct {
-				for j := 0; j < dd.NumField(); j++ {
-					ptrs = append(ptrs, dd.Field(j).Addr().Interface())
-				}
-				continue
-			}
-			ptrs = append(ptrs, vpInd.Field(i).Addr().Interface())
-		}
+		ptrs = append(ptrs, getPtrs(vpInd)...)
 
 		err := rows.Scan(ptrs...)
+		if err != nil {
+			helpers.LogError(err.Error())
+		}
+
+		direct.Set(reflect.Append(direct, reflect.Indirect(vp)))
+	}
+}
+
+// GetIntoVar scans row into slice of single variable
+func GetIntoVar(rows *sql.Rows, dest interface{}) {
+	v := reflect.ValueOf(dest)
+	direct := reflect.Indirect(v)
+	base := v.Elem().Type().Elem()
+
+	if v.Kind() != reflect.Ptr {
+		helpers.LogError("Destination not pointer")
+		return
+	}
+
+	for rows.Next() {
+		vp := reflect.New(base)
+		vpInd := vp.Elem()
+		err := rows.Scan(vpInd.Addr().Interface())
 		if err != nil {
 			helpers.LogError(err.Error())
 		}

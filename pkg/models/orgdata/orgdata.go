@@ -47,7 +47,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data OrgData) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
@@ -59,7 +59,7 @@ func (a Model) Create(data OrgData) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(data OrgData) (orgData []OrgData) {
-	query, args := models.QueryBuilderGet(data, schema, tableName)
+	query, args := models.QueryBuilderGet(data, schema+"."+tableName)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {

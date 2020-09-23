@@ -1,8 +1,9 @@
-package bridge
+package eventhost
 
 import (
 	"database/sql"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
 
@@ -11,14 +12,15 @@ import (
 )
 
 const (
-	tableName = "event_user_bridge"
+	tableName = "event_host_bridge"
 	schema    = "public"
 )
 
-type EventUserBridge struct {
+type EventHostBridge struct {
 	GeneratedID  string          `row:"generated_id" type:"exact" pk:"auto" json:"generated_id"`
 	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation_id" fk:"organisation.organisation" fr:"organisation_id"`
 	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer_id" fk:"volunteer.volunteer" fr:"volunteer_id"`
+	Event        event.Event     `row:"event_id" type:"exact" json:"event_id" fk:"public.events" fr:"event_id"`
 }
 
 type Model struct {
@@ -42,8 +44,8 @@ func (a Model) Close() {
 }
 
 // Create creates a value in database
-func (a Model) Create(data EventUserBridge) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+func (a Model) Create(data EventHostBridge) error {
+	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
@@ -54,8 +56,8 @@ func (a Model) Create(data EventUserBridge) error {
 
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
-func (a Model) Get(data EventUserBridge) (eventUserBridge []EventUserBridge) {
-	query, args := models.QueryBuilderJoin(data, schema, tableName)
+func (a Model) Get(data EventHostBridge) (eventHostBridge []EventHostBridge) {
+	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
 	helpers.LogInfo(query)
 
 	row, err := a.conn.Query(query, args...)
@@ -63,6 +65,20 @@ func (a Model) Get(data EventUserBridge) (eventUserBridge []EventUserBridge) {
 		helpers.LogError(err.Error())
 		return
 	}
-	models.GetIntoStruct(row, &eventUserBridge)
+	models.GetIntoStruct(row, &eventHostBridge)
+	return
+}
+
+// Count gets count of rows corresponsing to provided search params
+func (a Model) Count(data EventHostBridge) (count []int) {
+	query, args := models.QueryBuilderCount(data, schema+"."+tableName)
+
+	row, err := a.conn.Query(query, args...)
+	if err != nil {
+		helpers.LogError(err.Error())
+		return
+	}
+
+	models.GetIntoVar(row, &count)
 	return
 }

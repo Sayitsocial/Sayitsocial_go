@@ -1,3 +1,7 @@
 [submodule "web"]
 	path = web
 	url = https://github.com/Sayitsocial/Front
+	branch = dev
+[submodule "swagger"]
+	path = swagger
+	url = https://github.com/Sayitsocial/Swagger

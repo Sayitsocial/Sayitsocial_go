@@ -44,7 +44,7 @@ func (a Model) Close() {
 func (a Model) Create(auth Auth) error {
 	auth.Password = hashPassword(auth.Password)
 
-	query, args := models.QueryBuilderCreate(auth, schema, tableName)
+	query, args := models.QueryBuilderCreate(auth, schema+"."+tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
@@ -56,7 +56,7 @@ func (a Model) Create(auth Auth) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(auth Auth) (allAuth []Auth) {
-	query, args := models.QueryBuilderGet(auth, schema, tableName)
+	query, args := models.QueryBuilderGet(auth, schema+"."+tableName)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {

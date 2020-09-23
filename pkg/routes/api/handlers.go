@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"log"
 	"net/http"
+
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -19,7 +19,7 @@ func (a Api) Register(r *mux.Router) {
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.StrictSlash(false)
 
-	//apiRouter.Use(middleware.AuthMiddleware())
+	// apiRouter.Use(middleware.AuthMiddleware())
 
 	apiRouter.HandleFunc("/create/vol", volCreateHandler).Methods("POST", "GET")
 	apiRouter.HandleFunc("/create/org", orgCreateHandler).Methods("POST", "GET")
@@ -32,7 +32,7 @@ func (a Api) Register(r *mux.Router) {
 // This will show create a new volunteer.
 //
 //     Consumes:
-//     - application/json
+//     - application/x-www-form-urlencoded
 //
 //     Produces:
 //     - application/json
@@ -53,6 +53,7 @@ func volCreateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.LogError("Error in GET parameters : " + err.Error())
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	helpers.LogInfo(req)
@@ -71,7 +72,7 @@ func volCreateHandler(w http.ResponseWriter, r *http.Request) {
 // This will show create a new volunteer.
 //
 //     Consumes:
-//     - application/json
+//     - application/x-www-form-urlencoded
 //
 //     Produces:
 //     - application/json
@@ -89,8 +90,9 @@ func orgCreateHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 
 	if err != nil {
-		log.Println("Error in GET parameters : ", err)
+		helpers.LogError("Error in GET parameters : " + err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	err = req.PutInDB()

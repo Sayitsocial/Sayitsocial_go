@@ -7,11 +7,11 @@ type LoginReq struct {
 
 	// Username of user
 	// required: true
-	// in: body
-	Username string `schema:"username,required"`
+	// in: query
+	Username string `schema:"username,required" json:"username"`
 
 	// Password of user
 	// required: true
-	// in: body
-	Password string `schema:"password,required"`
+	// in: query
+	Password string `schema:"password,required" json:"password"`
 }

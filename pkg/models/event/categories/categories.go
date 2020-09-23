@@ -39,7 +39,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data EventCategory) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
@@ -51,7 +51,7 @@ func (a Model) Create(data EventCategory) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input structs
 func (a Model) Get(data EventCategory) (eventCat []EventCategory) {
-	query, args := models.QueryBuilderGet(data, schema, tableName)
+	query, args := models.QueryBuilderGet(data, schema+"."+tableName)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {

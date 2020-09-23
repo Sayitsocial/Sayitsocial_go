@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
@@ -22,23 +23,23 @@ type volCreReq struct {
 
 	// First name of user
 	// required: true
-	// in: body
-	FirstName string `schema:"first_name,required"`
+	// in: query
+	FirstName string `schema:"first_name,required" json:"first_name"`
 
 	// Last name of user
 	// required: true
-	// in: body
-	LastName string `schema:"last_name,required"`
+	// in: query
+	LastName string `schema:"last_name,required" json:"last_name"`
 
 	// Email of user
 	// required: true
-	// in: body
-	Email string `schema:"email,required"`
+	// in: query
+	Email string `schema:"email,required" json:"email"`
 
 	// Password of user
 	// required: true
-	// in: body
-	Password string `schema:"password,required"`
+	// in: query
+	Password string `schema:"password,required" json:"password"`
 }
 
 func (u volCreReq) PutInDB() error {
@@ -70,8 +71,10 @@ func (u volCreReq) PutInDB() error {
 	return err
 }
 
+// OrgType is type of organisation
 type OrgType int
 
+// enums for org types
 const (
 	NGO     OrgType = 0
 	Company OrgType = 1
@@ -85,38 +88,38 @@ type orgCreReq struct {
 
 	// Email of Organisation
 	// required: true
-	// in: body
-	Email string `schema:"email,required"`
+	// in: query
+	Email string `schema:"email,required" json:"email"`
 
 	// Password of user
 	// required: true
-	// in: body
-	Password string `schema:"password,required"`
+	// in: query
+	Password string `schema:"password,required" json:"password"`
 
 	// Name of Organisation
 	// required: true
-	// in: body
-	OrgName string `schema:"org_name,required"`
+	// in: query
+	OrgName string `schema:"org_name,required" json:"org_name"`
 
 	// Type of Organisation
 	// required: true
-	// in: body
-	TypeOfOrg OrgType `schema:"org_type,required"`
+	// in: query
+	TypeOfOrg OrgType `schema:"org_type,required" json:"org_type"`
 
 	// Locality of Organisation
 	// required: true
-	// in: body
-	Locality string `schema:"locality,required"`
+	// in: query
+	Locality string `schema:"locality,required" json:"locality"`
 
 	// Owner of Organisation
 	// required: true
-	// in: body
-	Owner string `schema:"owner,required"`
+	// in: query
+	Owner string `schema:"owner,required" json:"owner"`
 
 	// Registration Number of organisation according to ngodarpan if applicable
 	// required: false
-	// in: body
-	RegistrationNo string `schema:"reg_no,required"`
+	// in: query
+	RegistrationNo string `schema:"reg_no,required" json:"reg_no"`
 }
 
 func (o orgCreReq) PutInDB() error {

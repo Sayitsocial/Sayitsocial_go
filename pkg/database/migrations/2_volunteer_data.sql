@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "volunteer"."volunteer"
  "contact_email" varchar(50) NOT NULL,
  "contact_phone" varchar(50) NOT NULL,
  "bio"           varchar(256) NOT NULL,
- "joined"        date NOT NULL,
+ "joined"        bigint NOT NULL,
  CONSTRAINT "PK_volunteer" PRIMARY KEY ( "volunteer_id" )
 );
 

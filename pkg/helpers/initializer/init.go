@@ -7,6 +7,8 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -23,6 +25,16 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+
+	model := eventattendee.Initialize()
+	defer model.Close()
+
+	helpers.LogInfo(model.Get(eventattendee.EventAttendeeBridge{
+		GeneratedID: "",
+		Volunteer: voldata.VolData{
+			VolunteerID: "1",
+		},
+	}))
 
 	err = initWebApp()
 	if err != nil {
@@ -45,7 +57,7 @@ func initHelpers() error {
 }
 
 func initWebApp() error {
-	addr := flag.String("addr", ":8000", "Address of server [default :8000]")
+	addr := flag.String("addr", "0.0.0.0:8000", "Address of server [default :8000]")
 	flag.Parse()
 
 	router := mux.NewRouter()

@@ -18,6 +18,7 @@ type VolData struct {
 	ContactEmail string `row:"contact_email" type:"like" json:"contact_email"`
 	ContactPhone string `row:"contact_phone" type:"like" json:"contact_phone"`
 	Bio          string `row:"bio" type:"like" json:"bio"`
+	Joined       int64  `row:"joined" type:"exact" json:"joined"`
 }
 
 type Model struct {
@@ -42,7 +43,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data VolData) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
 
 	_, err := a.conn.Exec(query, args...)
 	if err != nil {
@@ -54,7 +55,9 @@ func (a Model) Create(data VolData) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(data VolData) (volData []VolData) {
-	query, args := models.QueryBuilderGet(data, schema, tableName)
+	query, args := models.QueryBuilderGet(data, schema+"."+tableName)
+
+	helpers.LogInfo(query)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
