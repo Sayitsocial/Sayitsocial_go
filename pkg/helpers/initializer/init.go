@@ -7,6 +7,8 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -22,8 +24,6 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-
-	helpers.LogError("test")
 
 	err = initWebApp()
 	if err != nil {
@@ -57,6 +57,15 @@ func initWebApp() error {
 	routes.RegisterApps(router)
 
 	helpers.LogInfo("Server starting at " + *addr)
+
+	model := bridge.Initialize()
+	defer model.Close()
+
+	helpers.LogInfo(model.GetInner(bridge.EventUserBridge{
+		Organisation: orgdata.OrgData{
+			OrganisationID: "1",
+		},
+	}))
 
 	err := http.ListenAndServe(*addr, loggedRouter)
 	if err != nil {
