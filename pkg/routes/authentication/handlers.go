@@ -129,7 +129,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 // swagger:route POST /auth/logout auth logout
 //
-// Login to existing account
+// Logout from existing account
 //
 //
 //     Consumes:
