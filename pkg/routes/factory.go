@@ -21,6 +21,7 @@ var apps = []App{api.Api{}, authentication.Authentication{}, sayitsocial.Sayitso
 
 // RegisterApps registers all sub routes
 func RegisterApps(r *mux.Router) {
+	r.Use(middleware.CorsMiddleware())
 	r.Use(middleware.RedirectMiddleware())
 	for _, i := range apps {
 		i.Register(r)
