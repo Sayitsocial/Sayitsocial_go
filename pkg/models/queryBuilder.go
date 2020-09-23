@@ -20,48 +20,87 @@ const (
 	manualPK = "manual"
 )
 
-func QueryBuilderGet(i interface{}, schemaName string, tableName string) (string, []interface{}) {
-	t := reflect.TypeOf(i)
-	v := reflect.ValueOf(i)
-	query := `SELECT `
+type tmpHolder struct {
+	name   string
+	typeOf string
+	value  reflect.Value
+}
 
-	var searchBy = make(map[int]string)
+func getAllMembers(inte interface{}, tableName string) string {
+	t := reflect.TypeOf(inte)
+	v := reflect.ValueOf(inte)
+
+	var ret = ""
 	for i := 0; i < v.NumField(); i++ {
-		row := t.Field(i).Tag.Get(helpers.RowStructTag)
-
-		if !checkEmpty(v.Field(i)) {
-			searchBy[i] = row
-		}
-
-		if row != "" {
-			if i < t.NumField()-1 {
-				query += row + ", "
+		if v.Field(i).Kind() == reflect.Struct {
+			if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
+				ret += getAllMembers(v.Field(i).Interface(), foreignTable)
 			} else {
-				query += row
+				ret += getAllMembers(v.Field(i).Interface(), tableName)
 			}
+			continue
+		} else {
+			ret += fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+		}
+		ret += ", "
+	}
+	return ret[:len(ret)-1]
+}
+
+func getSearchBy(inte interface{}, tableName string) (totalSearchByCount int, searchBy []tmpHolder) {
+	t := reflect.TypeOf(inte)
+	v := reflect.ValueOf(inte)
+	for i := 0; i < v.NumField(); i++ {
+		if v.Field(i).Kind() == reflect.Struct {
+			if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
+				tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), foreignTable)
+				totalSearchByCount += tmpCount
+				searchBy = append(searchBy, tmpSearchBy...)
+			} else {
+				tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), tableName)
+				totalSearchByCount += tmpCount
+				searchBy = append(searchBy, tmpSearchBy...)
+			}
+			continue
+		}
+		if !checkEmpty(v.Field(i)) {
+			searchBy = append(searchBy, tmpHolder{
+				name:   fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag)),
+				typeOf: "exact",
+				value:  v.Field(i),
+			})
+			totalSearchByCount++
 		}
 	}
+	return
+}
 
-	query += " FROM " + fmt.Sprintf("%s.%s", schemaName, tableName)
-	if len(searchBy) == 0 {
-		return query, nil
-	}
-
+func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, string) {
 	args := make([]interface{}, 0)
-	query += " WHERE "
-	var searchByCount int
-	for index, rowName := range searchBy {
-		searchByCount += 1
-		if t.Field(index).Tag.Get("type") == "exact" {
-			query += fmt.Sprintf("%v = $%s", rowName, strconv.Itoa(searchByCount))
-		} else if t.Field(index).Tag.Get("type") == "like" {
-			query += fmt.Sprintf("%v ILIKE $%s", rowName, strconv.Itoa(searchByCount))
+	if len(searchBy) == 0 {
+		return nil, ""
+	}
+	query := " WHERE "
+	for searchByCount, r := range searchBy {
+		if r.typeOf == "exact" {
+			query += fmt.Sprintf("%v = $%d", r.name, searchByCount+1)
+		} else if r.typeOf == "like" {
+			query += fmt.Sprintf("%v ILIKE $%d", r.name, searchByCount+1)
 		}
-		if searchByCount != len(searchBy) {
+		if searchByCount < totalSearchByCount-1 {
 			query += " AND "
 		}
-		args = append(args, v.Field(index).Interface())
+		args = append(args, r.value.Interface())
 	}
+	return args, query
+}
+
+func QueryBuilderGet(i interface{}, schemaName string, tableName string) (string, []interface{}) {
+	query := `SELECT ` + getAllMembers(i, schemaName+"."+tableName)
+
+	args, where := getArgsWhere(getSearchBy(i, schemaName+"."+tableName))
+	query += " FROM " + fmt.Sprintf("%s.%s", schemaName, tableName)
+	query += where
 
 	return query, args
 }
@@ -181,121 +220,28 @@ func QueryBuilderUpdate(i interface{}, schemaName string, tableName string) (str
 	return query, args
 }
 
-func QueryBuilderJoin(inte interface{}, schemaName string, tableName string) (string, []interface{}) {
+func getInnerJoin(inte interface{}, tableName string) string {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
-
-	type tmpHolder struct {
-		name   string
-		typeOf string
-		value  reflect.Value
-	}
-
-	var searchBy = make([]tmpHolder, 0)
-	var innerJoinBy = make([]reflect.Value, 0)
-
-	innerJoinQuery := ""
-	query := `SELECT `
-	var totalSearchByCount = 0
-	fkTableCount := 0
+	var ret string
 	for i := 0; i < v.NumField(); i++ {
-		if ok, _ := getFkTable(t.Field(i)); ok {
-			fkTableCount++
+		if v.Field(i).Kind() == reflect.Struct {
+			ret += fmt.Sprintf(" INNER JOIN %s ON (%s.%s = %s.%s) ", t.Field(i).Tag.Get("fk"), tableName, t.Field(i).Tag.Get(helpers.RowStructTag), t.Field(i).Tag.Get("fk"), t.Field(i).Tag.Get("fr"))
 		}
 	}
-	for i := 0; i < v.NumField(); i++ {
-		if ok, tab := getFkTable(t.Field(i)); ok {
-			if v.Field(i).Kind() == reflect.Struct {
-				struc := v.Field(i)
-				strucType := t.Field(i).Type
+	return ret
+}
 
-				for j := 0; j < struc.NumField(); j++ {
-					if ok, _ := isPK(strucType.Field(j)); ok {
-						innerJoinQuery += fmt.Sprintf("INNER JOIN  %s ON (%s.%s.%s = %s.%s) ", tab, schemaName, tableName, strucType.Field(j).Tag.Get(helpers.RowStructTag), tab, strucType.Field(j).Tag.Get(helpers.RowStructTag))
-						typeOf := strucType.Field(j).Tag.Get("type")
-						row := strucType.Field(j).Tag.Get(helpers.RowStructTag)
-						if !checkEmpty(struc.Field(j)) {
-							if typeOf == "like" {
-								searchBy = append(searchBy, tmpHolder{
-									name:   fmt.Sprintf("%s.%s", tab, row),
-									typeOf: "like",
-									value:  struc.Field(j),
-								})
-								totalSearchByCount++
-							} else if typeOf == "exact" {
-								searchBy = append(searchBy, tmpHolder{
-									name:   fmt.Sprintf("%s.%s", tab, row),
-									typeOf: "exact",
-									value:  struc.Field(j),
-								})
-								totalSearchByCount++
-							}
-						}
+func QueryBuilderJoin(inte interface{}, schemaName string, tableName string) (string, []interface{}) {
+	query := `SELECT ` + getAllMembers(inte, schemaName+"."+tableName)
 
-					}
-					if j < struc.NumField()-1 || fkTableCount > 1 {
-						query += tab + "." + strucType.Field(j).Tag.Get(helpers.RowStructTag) + ", "
-					} else {
-						query += tab + "." + strucType.Field(j).Tag.Get(helpers.RowStructTag)
-					}
-				}
-				innerJoinBy = append(innerJoinBy, struc)
-				fkTableCount--
-				continue
-			}
-		}
+	query += " FROM " + fmt.Sprintf("%s.%s", schemaName, tableName)
 
-		row := t.Field(i).Tag.Get(helpers.RowStructTag)
-		typeOf := t.Field(i).Tag.Get("type")
+	innerJoin := getInnerJoin(inte, schemaName+"."+tableName)
+	query += innerJoin
 
-		if !checkEmpty(v.Field(i)) {
-			if typeOf == "like" {
-				searchBy = append(searchBy, tmpHolder{
-					name:   fmt.Sprintf("%s.%s.%s", schemaName, tableName, row),
-					typeOf: "like",
-					value:  v.Field(i),
-				})
-				totalSearchByCount++
-			} else if typeOf == "exact" {
-				searchBy = append(searchBy, tmpHolder{
-					name:   fmt.Sprintf("%s.%s.%s", schemaName, tableName, row),
-					typeOf: "exact",
-					value:  v.Field(i),
-				})
-			}
-		}
-
-		if row != "" {
-			if i < t.NumField()-1 {
-				query += row + ", "
-			} else {
-				query += row
-			}
-		}
-	}
-
-	query += " FROM " + fmt.Sprintf("%s.%s ", schemaName, tableName)
-	if len(searchBy) == 0 {
-		return "", nil
-	}
-
-	query += innerJoinQuery
-
-	args := make([]interface{}, 0)
-	query += " WHERE "
-	var searchByCount = 0
-	for _, r := range searchBy {
-		searchByCount++
-		if r.typeOf == "exact" {
-			query += fmt.Sprintf("%v = $%s", r.name, strconv.Itoa(searchByCount))
-		} else if r.typeOf == "like" {
-			query += fmt.Sprintf("%v ILIKE $%s", r.name, strconv.Itoa(searchByCount))
-		}
-		if searchByCount != totalSearchByCount {
-			query += " AND "
-		}
-		args = append(args, r.value.Interface())
-	}
+	args, where := getArgsWhere(getSearchBy(inte, schemaName+"."+tableName))
+	query += where
 
 	return query, args
 }
