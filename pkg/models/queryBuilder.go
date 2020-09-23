@@ -95,6 +95,7 @@ func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, 
 	return args, query
 }
 
+// QueryBuilderGet generates normal get queries for non nested structures
 func QueryBuilderGet(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	query := `SELECT ` + getAllMembers(i, schemaName+"."+tableName)
 
@@ -105,6 +106,7 @@ func QueryBuilderGet(i interface{}, schemaName string, tableName string) (string
 	return query, args
 }
 
+// QueryBuilderCreate generates normal create queries for non nested structures
 func QueryBuilderCreate(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
@@ -160,6 +162,7 @@ func QueryBuilderCreate(i interface{}, schemaName string, tableName string) (str
 	return query, args
 }
 
+// QueryBuilderDelete generates normal delete queries for non nested structures
 func QueryBuilderDelete(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
@@ -181,6 +184,7 @@ func QueryBuilderDelete(i interface{}, schemaName string, tableName string) (str
 	return "", nil
 }
 
+// QueryBuilderUpdate generates normal update queries for non nested structures
 func QueryBuilderUpdate(i interface{}, schemaName string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
 	v := reflect.ValueOf(i)
@@ -210,7 +214,7 @@ func QueryBuilderUpdate(i interface{}, schemaName string, tableName string) (str
 
 	}
 
-	if len(args) < 0 {
+	if len(args) == 0 {
 		return "", nil
 	}
 
@@ -232,6 +236,7 @@ func getInnerJoin(inte interface{}, tableName string) string {
 	return ret
 }
 
+// QueryBuilderJoin generates get queries for nested structures with inner join support
 func QueryBuilderJoin(inte interface{}, schemaName string, tableName string) (string, []interface{}) {
 	query := `SELECT ` + getAllMembers(inte, schemaName+"."+tableName)
 
@@ -246,29 +251,8 @@ func QueryBuilderJoin(inte interface{}, schemaName string, tableName string) (st
 	return query, args
 }
 
+// GetIntoStruct scans rows into slice of struct
 func GetIntoStruct(rows *sql.Rows, dest interface{}) {
-	v := reflect.ValueOf(dest)
-	direct := reflect.Indirect(v)
-
-	if v.Kind() != reflect.Ptr {
-		helpers.LogError("Destination not pointer")
-		return
-	}
-
-	if direct.Kind() != reflect.Slice {
-		helpers.LogError("Destination not slice")
-		return
-	}
-
-	base := v.Elem().Type().Elem()
-	vp := reflect.New(base)
-
-	for rows.Next() {
-		direct.Set(reflect.Append(direct, scanSingleStruct(vp, rows)))
-	}
-}
-
-func GetIntoNestedStruct(rows *sql.Rows, dest interface{}) {
 	v := reflect.ValueOf(dest)
 	direct := reflect.Indirect(v)
 
@@ -293,7 +277,6 @@ func GetIntoNestedStruct(rows *sql.Rows, dest interface{}) {
 			dd := reflect.Indirect(vpInd.Field(i))
 			if dd.Kind() == reflect.Struct {
 				for j := 0; j < dd.NumField(); j++ {
-					// helpers.LogInfo(vpInd.Type().Field(j).Tag.Get("row"))
 					ptrs = append(ptrs, dd.Field(j).Addr().Interface())
 				}
 				continue
@@ -310,24 +293,8 @@ func GetIntoNestedStruct(rows *sql.Rows, dest interface{}) {
 	}
 }
 
-func scanSingleStruct(dest reflect.Value, row *sql.Rows) reflect.Value {
-	numfields := reflect.Indirect(dest).NumField()
-	ind := reflect.Indirect(dest)
-
-	ptrs := make([]interface{}, numfields)
-
-	for i := 0; i < numfields; i++ {
-		ptrs[i] = ind.Field(i).Addr().Interface()
-	}
-
-	err := row.Scan(ptrs...)
-	if err != nil {
-		helpers.LogError(err.Error())
-	}
-	return ind
-}
-
-func IsTableEmpty(schemaName string, tableName string, conn *sql.DB) {
+// isTableExist runs migrations if table is non existent
+func isTableExist(schemaName string, tableName string, conn *sql.DB) {
 	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schemaName, tableName)
 
 	if err != nil {
@@ -354,6 +321,8 @@ func IsTableEmpty(schemaName string, tableName string, conn *sql.DB) {
 	}
 }
 
+// IsValueExists checks if value exists in table
+// If it exists returns the ID of that value
 func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName string) (bool, int64) {
 	rows, err := conn.Query(fmt.Sprintf(`SELECT generated_id FROM %s WHERE  %s=?`, tableName, keyname), key)
 
@@ -362,16 +331,16 @@ func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName stri
 		return false, -1
 	}
 
-	var genId int64 = -1
+	var genID int64 = -1
 	for rows.Next() {
-		err := rows.Scan(&genId)
+		err := rows.Scan(&genID)
 		if err != nil {
 			helpers.LogError(err.Error())
 		}
 	}
 
-	if genId > -1 {
-		return true, genId
+	if genID > -1 {
+		return true, genID
 	}
 
 	return false, -1
@@ -388,7 +357,7 @@ func checkEmpty(value reflect.Value) bool {
 		return value.IsZero()
 	}
 
-	//else check string
+	// else check string
 	matchedString, err := regexp.MatchString("string", value.Type().String())
 	if err != nil {
 		helpers.LogError(err.Error())
@@ -426,16 +395,17 @@ func getFkTable(field reflect.StructField) (bool, string) {
 	return false, ""
 }
 
-func GetForeignRow(field reflect.StructField) string {
+func getForeignRow(field reflect.StructField) string {
 	if field.Tag.Get("fr") != "" {
 		return field.Tag.Get("fr")
-	} else {
-		return field.Tag.Get("row")
 	}
+	return field.Tag.Get("row")
 }
 
+// GetConn returns connection to tables
+// Also check if table exists
 func GetConn(schema string, table string) *sql.DB {
 	conn := database.GetConn()
-	IsTableEmpty(schema, table, conn)
+	isTableExist(schema, table, conn)
 	return conn
 }

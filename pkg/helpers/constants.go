@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 )
 
+// Path constants
 var (
 	configPath   string
 	LogsPath     string
@@ -15,6 +16,7 @@ var (
 	PgConnString string
 )
 
+// Generic constants
 const (
 	UsernameKey = "username"
 	PasswordKey = "password"
@@ -36,7 +38,7 @@ const (
 	InvalidCredentialsError = "Invalid username or password"
 	InvalidUserTypeError    = "Invalid user type"
 
-	HttpSuccessMessage = "success"
+	HTTPSuccessMessage = "success"
 
 	DbSchemaAuth   = "auth"
 	DbSchemaOrg    = "organisation"

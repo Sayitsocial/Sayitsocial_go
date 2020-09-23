@@ -25,12 +25,15 @@ type Model struct {
 	conn *sql.DB
 }
 
+// Initialize returns model of db with active connection
 func Initialize() *Model {
 	return &Model{
 		conn: models.GetConn(schema, tableName),
 	}
 }
 
+// Close closes the connection to db
+// Model should not be used after close is called
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
@@ -38,6 +41,7 @@ func (a Model) Close() {
 	}
 }
 
+// Create creates a value in database
 func (a Model) Create(data EventUserBridge) error {
 	query, args := models.QueryBuilderCreate(data, schema, tableName)
 
@@ -48,20 +52,9 @@ func (a Model) Create(data EventUserBridge) error {
 	return nil
 }
 
+// Get data from db into slice of struct
+// Searches by the member provided in input struct
 func (a Model) Get(data EventUserBridge) (eventUserBridge []EventUserBridge) {
-	query, args := models.QueryBuilderGet(data, schema, tableName)
-
-	row, err := a.conn.Query(query, args...)
-	if err != nil {
-		helpers.LogError(err.Error())
-		return
-	}
-
-	models.GetIntoStruct(row, &eventUserBridge)
-	return
-}
-
-func (a Model) GetInner(data EventUserBridge) (eventUserBridge []EventUserBridge) {
 	query, args := models.QueryBuilderJoin(data, schema, tableName)
 	helpers.LogInfo(query)
 
@@ -70,6 +63,6 @@ func (a Model) GetInner(data EventUserBridge) (eventUserBridge []EventUserBridge
 		helpers.LogError(err.Error())
 		return
 	}
-	models.GetIntoNestedStruct(row, &eventUserBridge)
+	models.GetIntoStruct(row, &eventUserBridge)
 	return
 }

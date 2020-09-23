@@ -1,12 +1,14 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/authentication"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
+// CookieAuthMiddleware authenticates user from cookies
 func CookieAuthMiddleware() mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,6 @@
 package authentication
 
+// Body contains body of response
 type Body struct {
 	// The validation message
 	//

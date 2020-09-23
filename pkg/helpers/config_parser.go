@@ -2,8 +2,9 @@ package helpers
 
 import (
 	"crypto/rand"
-	"github.com/spf13/viper"
 	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 	configFormat   = "yaml"
 )
 
+// ConfigInit initializes config file
 func ConfigInit() error {
 	initPaths()
 
@@ -29,23 +31,25 @@ func ConfigInit() error {
 
 func writeInitial() error {
 	if string(GetSessionsKey()) == "" {
-		viper.Set("sessionsKey", GenerateRandomKey(64))
+		viper.Set("sessionsKey", generateRandomKey(64))
 		err := write()
 		return err
 	}
 
 	if string(GetEncryptionKey()) == "" {
-		viper.Set("encryptionkey", GenerateRandomKey(32))
+		viper.Set("encryptionkey", generateRandomKey(32))
 		err := write()
 		return err
 	}
 	return nil
 }
 
+// GetSessionsKey returns session key for session store
 func GetSessionsKey() []byte {
 	return []byte(viper.GetString("sessionsKey"))
 }
 
+// GetEncryptionKey returns encryption key for session store
 func GetEncryptionKey() []byte {
 	return []byte(viper.GetString("encryptionkey"))
 }
@@ -57,7 +61,7 @@ func write() error {
 	return nil
 }
 
-func GenerateRandomKey(l int) string {
+func generateRandomKey(l int) string {
 	b := make([]byte, l)
 	_, err := rand.Read(b)
 	if err != nil {

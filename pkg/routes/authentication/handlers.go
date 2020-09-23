@@ -3,31 +3,30 @@ package authentication
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 var decoder = schema.NewDecoder()
 
+// Authentication is just an interface to register authentication routes
 type Authentication struct {
-}
-
-type Context struct {
-	Error string
 }
 
 const (
 	baseURL = "/auth"
 )
 
+// SessionsStore memory store for cookies
 var SessionsStore = sessions.NewCookieStore(helpers.GetSessionsKey(), helpers.GetEncryptionKey())
 
-// register SubRouter
+// Register registers SubRouter
 func (a Authentication) Register(r *mux.Router) {
 	authRouter := r.PathPrefix(baseURL).Subrouter()
 
@@ -66,10 +65,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := SessionsStore.Get(r, helpers.SessionsKey)
 
 	// If user is already logged in, don't show login page again until logout
-	//if ValidateSession(w, r) {
-	//	routes.Redirect(w, r, "/home", routes.StatusFound)
-	//	return
-	//}
+	// if ValidateSession(w, r) {
+	// 	routes.Redirect(w, r, "/home", routes.StatusFound)
+	// 	return
+	// }
 
 	err := r.ParseForm()
 	if err != nil {
@@ -164,7 +163,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = fmt.Fprintf(w, helpers.HttpSuccessMessage)
+	_, err = fmt.Fprintf(w, helpers.HTTPSuccessMessage)
 	if err != nil {
 		helpers.LogError(err.Error())
 	}
@@ -191,9 +190,8 @@ func userIsValid(username string, password string, typeOfUser *string) bool {
 	return false
 }
 
-/* Compares session key to server and validates
- * If valid, then rebuilds session
- */
+// ValidateSession compares session key to server and validates
+// If valid, then rebuilds session
 func ValidateSession(w http.ResponseWriter, r *http.Request) bool {
 	session, err := SessionsStore.Get(r, helpers.SessionsKey)
 	if err != nil {
@@ -234,6 +232,7 @@ func isLogged(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetUsernameFromSession returns username from http request
 func GetUsernameFromSession(r *http.Request) string {
 	session, err := SessionsStore.Get(r, helpers.SessionsKey)
 	if err != nil {
@@ -246,7 +245,7 @@ func GetUsernameFromSession(r *http.Request) string {
 	return session.Values[helpers.UsernameKey].(string)
 }
 
-//func IsAdminFromSession(r *routes.Request) bool {
+// func IsAdminFromSession(r *routes.Request) bool {
 //	session, err := SessionsStore.Get(r, helpers.SessionsKey)
 //	if err != nil {
 //		return false

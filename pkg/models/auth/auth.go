@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"golang.org/x/crypto/bcrypt"
@@ -23,12 +24,15 @@ type Model struct {
 	conn *sql.DB
 }
 
+// Initialize returns model of db with active connection
 func Initialize() *Model {
 	return &Model{
 		conn: models.GetConn(schema, tableName),
 	}
 }
 
+// Close closes the connection to db
+// Model should not be used after close is called
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
@@ -36,6 +40,7 @@ func (a Model) Close() {
 	}
 }
 
+// Create creates a value in database
 func (a Model) Create(auth Auth) error {
 	auth.Password = hashPassword(auth.Password)
 
@@ -48,6 +53,8 @@ func (a Model) Create(auth Auth) error {
 	return nil
 }
 
+// Get data from db into slice of struct
+// Searches by the member provided in input struct
 func (a Model) Get(auth Auth) (allAuth []Auth) {
 	query, args := models.QueryBuilderGet(auth, schema, tableName)
 

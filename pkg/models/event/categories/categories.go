@@ -21,12 +21,15 @@ type Model struct {
 	conn *sql.DB
 }
 
+// Initialize returns model of db with active connection
 func Initialize() *Model {
 	return &Model{
 		conn: models.GetConn(schema, tableName),
 	}
 }
 
+// Close closes the connection to db
+// Model should not be used after close is called
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
@@ -34,6 +37,7 @@ func (a Model) Close() {
 	}
 }
 
+// Create creates a value in database
 func (a Model) Create(data EventCategory) error {
 	query, args := models.QueryBuilderCreate(data, schema, tableName)
 
@@ -44,6 +48,8 @@ func (a Model) Create(data EventCategory) error {
 	return nil
 }
 
+// Get data from db into slice of struct
+// Searches by the member provided in input structs
 func (a Model) Get(data EventCategory) (eventCat []EventCategory) {
 	query, args := models.QueryBuilderGet(data, schema, tableName)
 

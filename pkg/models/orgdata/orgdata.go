@@ -2,6 +2,7 @@ package orgdata
 
 import (
 	"database/sql"
+
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 )
@@ -28,12 +29,15 @@ type Model struct {
 	conn *sql.DB
 }
 
+// Initialize returns model of db with active connection
 func Initialize() *Model {
 	return &Model{
 		conn: models.GetConn(schema, tableName),
 	}
 }
 
+// Close closes the connection to db
+// Model should not be used after close is called
 func (a Model) Close() {
 	err := a.conn.Close()
 	if err != nil {
@@ -41,6 +45,7 @@ func (a Model) Close() {
 	}
 }
 
+// Create creates a value in database
 func (a Model) Create(data OrgData) error {
 	query, args := models.QueryBuilderCreate(data, schema, tableName)
 
@@ -51,6 +56,8 @@ func (a Model) Create(data OrgData) error {
 	return nil
 }
 
+// Get data from db into slice of struct
+// Searches by the member provided in input struct
 func (a Model) Get(data OrgData) (orgData []OrgData) {
 	query, args := models.QueryBuilderGet(data, schema, tableName)
 

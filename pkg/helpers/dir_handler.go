@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 )
 
+// CreateDirs creates directories required by app
 func CreateDirs() error {
 	err := makeDir(filepath.FromSlash(DatabasePath))
 	if err != nil {

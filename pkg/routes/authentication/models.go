@@ -1,6 +1,6 @@
 package authentication
 
-// Login details
+// LoginReq contains Login details
 //
 //swagger:parameters login
 type LoginReq struct {

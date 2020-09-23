@@ -1,17 +1,19 @@
 package helpers
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/t-tomalak/logrus-easy-formatter"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
 	"runtime"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	easy "github.com/t-tomalak/logrus-easy-formatter"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var logger *logrus.Logger
 
+// LoggerInit initializes logger
 func LoggerInit() {
 	logger = &logrus.Logger{
 		Out:   os.Stderr,
@@ -33,6 +35,7 @@ func LoggerInit() {
 	logger.SetOutput(mWriter)
 }
 
+// LogError Log errors to console with formatting
 func LogError(message interface{}) {
 	logger.WithFields(logrus.Fields{
 		"component": func() string {
@@ -42,6 +45,7 @@ func LogError(message interface{}) {
 	}).Error(message)
 }
 
+// LogInfo Log info to console with formatting
 func LogInfo(message interface{}) {
 	logger.WithFields(logrus.Fields{
 		"component": func() string {
@@ -51,6 +55,7 @@ func LogInfo(message interface{}) {
 	}).Info(message)
 }
 
+// LogWarning Log warning to console with formatting
 func LogWarning(message interface{}) {
 	logger.WithFields(logrus.Fields{
 		"component": func() string {

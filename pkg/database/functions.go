@@ -10,6 +10,7 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 )
 
+// GetConn returns Conn to database
 func GetConn() *sql.DB {
 
 	conn, err := sql.Open("postgres", helpers.PgConnString)
@@ -21,6 +22,7 @@ func GetConn() *sql.DB {
 	return conn
 }
 
+// RunMigrations runs all provided migrations
 func RunMigrations() error {
 	migrationsAuth := &migrate.HttpFileSystemMigrationSource{
 		FileSystem: http.Dir("./pkg/database/migrations/"),
