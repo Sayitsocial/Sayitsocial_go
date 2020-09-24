@@ -1,9 +1,11 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -21,8 +23,9 @@ func (a Api) Register(r *mux.Router) {
 
 	// apiRouter.Use(middleware.AuthMiddleware())
 
-	apiRouter.HandleFunc("/create/vol", volCreateHandler).Methods("POST", "GET")
-	apiRouter.HandleFunc("/create/org", orgCreateHandler).Methods("POST", "GET")
+	apiRouter.HandleFunc("/create/vol", volCreateHandler).Methods("POST")
+	apiRouter.HandleFunc("/create/org", orgCreateHandler).Methods("POST")
+	apiRouter.HandleFunc("/event", eventHandler).Methods("POST", "GET")
 }
 
 // swagger:route POST /api/create/vol user_creation createVolunteer
@@ -99,5 +102,87 @@ func orgCreateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.LogError(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func eventHandler(w http.ResponseWriter, r *http.Request) {
+	model := event.Initialize(nil)
+	defer model.Close()
+
+	if r.Method == "GET" {
+		// swagger:route GET /api/event event_creation getEvent
+		//
+		// Get details of event
+		// Atleast one param is required
+		//
+		// This will show create a new volunteer.
+		//
+		//     Consumes:
+		//     - application/x-www-form-urlencoded
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http
+		//
+		//
+		//     Security:
+		//       cookieAuth
+		//
+		//     Responses:
+		//       200: successResponse
+		var req eventGetReq
+		err := decoder.Decode(&req, r.URL.Query())
+		if err != nil {
+			helpers.LogError(err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		data, err := req.CastToModel()
+		if err != nil {
+			helpers.LogError(err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = json.NewEncoder(w).Encode(model.Get(data))
+		if err != nil {
+			helpers.LogError(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else if r.Method == "POST" {
+		// swagger:route POST /api/event event_creation createEvent
+		//
+		// Create a new event
+		//
+		// This will show create a new volunteer.
+		//
+		//     Consumes:
+		//     - application/x-www-form-urlencoded
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http
+		//
+		//
+		//     Security:
+		//       cookieAuth
+		//
+		//     Responses:
+		//       200: successResponse
+		var req eventPostReq
+		err := decoder.Decode(&req, r.URL.Query())
+		if err != nil {
+			helpers.LogError(err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = req.PutInDB()
+		if err != nil {
+			helpers.LogError(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
