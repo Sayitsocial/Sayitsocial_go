@@ -18,9 +18,9 @@ const (
 
 type EventHostBridge struct {
 	GeneratedID  string          `row:"generated_id" type:"exact" pk:"manual" json:"generated_id"`
-	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation_id" fk:"organisation.organisation" fr:"organisation_id"`
-	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer_id" fk:"volunteer.volunteer" fr:"volunteer_id"`
-	Event        event.Event     `row:"event_id" type:"exact" json:"event_id" fk:"public.events" fr:"event_id"`
+	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation_id" fk:"organisation.organisation" fr:"organisation"`
+	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer_id" fk:"volunteer.volunteer" fr:"volunteer"`
+	Event        event.Event     `row:"event_id" type:"exact" json:"event_id" fk:"public.events" fr:"event"`
 }
 
 type Model struct {

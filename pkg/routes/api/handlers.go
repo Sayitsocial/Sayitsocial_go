@@ -6,6 +6,8 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -26,6 +28,8 @@ func (a Api) Register(r *mux.Router) {
 	apiRouter.HandleFunc("/create/vol", volCreateHandler).Methods("POST")
 	apiRouter.HandleFunc("/create/org", orgCreateHandler).Methods("POST")
 	apiRouter.HandleFunc("/event", eventHandler).Methods("POST", "GET")
+	apiRouter.HandleFunc("/event/host", eventHostBridge).Methods("GET")
+	apiRouter.HandleFunc("/event/attendee", eventAttendeeBridge).Methods("GET")
 }
 
 // swagger:route POST /api/create/vol user_creation createVolunteer
@@ -105,12 +109,106 @@ func orgCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// swagger:route GET /api/event/host event getEventHost
+//
+// Get hosts of event
+// Atleast one param is required
+//
+// This will show create a new volunteer.
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       200: successResponse
+func eventHostBridge(w http.ResponseWriter, r *http.Request) {
+	var req eventHostReq
+	err := decoder.Decode(&req, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	data, err := req.CastToModel()
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	model := eventhost.Initialize(nil)
+	defer model.Close()
+
+	err = json.NewEncoder(w).Encode(model.Get(data))
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// swagger:route GET /api/event/attendee event getEventAttendee
+//
+// Get attendees of event
+// Atleast one param is required
+//
+// This will show create a new volunteer.
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       200: successResponse
+func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
+	var req eventAttendeeReq
+	err := decoder.Decode(&req, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	data, err := req.CastToModel()
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	model := eventattendee.Initialize(nil)
+	defer model.Close()
+
+	err = json.NewEncoder(w).Encode(model.Get(data))
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func eventHandler(w http.ResponseWriter, r *http.Request) {
 	model := event.Initialize(nil)
 	defer model.Close()
 
 	if r.Method == "GET" {
-		// swagger:route GET /api/event event_creation getEvent
+		// swagger:route GET /api/event event getEvent
 		//
 		// Get details of event
 		// Atleast one param is required
@@ -151,7 +249,7 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if r.Method == "POST" {
-		// swagger:route POST /api/event event_creation createEvent
+		// swagger:route POST /api/event event createEvent
 		//
 		// Create a new event
 		//

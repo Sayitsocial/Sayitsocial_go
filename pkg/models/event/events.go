@@ -20,7 +20,7 @@ type Event struct {
 	Description string                   `row:"description" type:"like" json:"description"`
 	StartTime   int64                    `row:"start_time" type:"exact" json:"start_time"`
 	HostTime    int64                    `row:"host_time" type:"exact" json:"host_time"`
-	Category    categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id"`
+	Category    categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id" json:"category"`
 }
 
 type Model struct {

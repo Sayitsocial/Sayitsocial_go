@@ -13,16 +13,12 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/categories"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
 )
-
-type request interface {
-	PutInDB() error
-	Validate() bool
-}
 
 // Signup details for Volunteer
 //
@@ -311,4 +307,79 @@ func (e eventPostReq) PutInDB() error {
 		return err
 	}
 	return tx.Commit()
+}
+
+// Event details
+//
+//swagger:parameters getEventHost
+type eventHostReq struct {
+
+	// Generated ID
+	// in: query
+	GeneratedID string `schema:"generated_id" json:"generated_id"`
+
+	// ID of host of event (org)
+	// in: query
+	OrganisationID string `schema:"organisation_id" json:"organisation_id"`
+
+	// ID of host of event (user)
+	// in: query
+	VolunteerID string `schema:"volunteer_id" json:"volunteer_id"`
+
+	// ID of event
+	// in: query
+	EventID string `schema:"event_id" json:"event_id"`
+}
+
+// CastToModel converts request struct to model struct
+func (e eventHostReq) CastToModel() (eventhost.EventHostBridge, error) {
+	// if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" {
+	// 	return event.Event{}, errors.New("Requires one parameter")
+	// }
+	return eventhost.EventHostBridge{
+		GeneratedID: e.GeneratedID,
+		Organisation: orgdata.OrgData{
+			OrganisationID: e.OrganisationID,
+		},
+		Volunteer: voldata.VolData{
+			VolunteerID: e.VolunteerID,
+		},
+		Event: event.Event{
+			EventID: e.EventID,
+		},
+	}, nil
+}
+
+// Event details
+//
+//swagger:parameters getEventAttendee
+type eventAttendeeReq struct {
+
+	// Generated ID
+	// in: query
+	GeneratedID string `schema:"generated_id" json:"generated_id"`
+
+	// ID of host of event (user)
+	// in: query
+	VolunteerID string `schema:"volunteer_id" json:"volunteer_id"`
+
+	// ID of event
+	// in: query
+	EventID string `schema:"event_id" json:"event_id"`
+}
+
+// CastToModel converts request struct to model struct
+func (e eventAttendeeReq) CastToModel() (eventattendee.EventAttendeeBridge, error) {
+	// if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" {
+	// 	return event.Event{}, errors.New("Requires one parameter")
+	// }
+	return eventattendee.EventAttendeeBridge{
+		GeneratedID: e.GeneratedID,
+		Volunteer: voldata.VolData{
+			VolunteerID: e.VolunteerID,
+		},
+		Event: event.Event{
+			EventID: e.EventID,
+		},
+	}, nil
 }
