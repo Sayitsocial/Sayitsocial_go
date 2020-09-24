@@ -1,11 +1,11 @@
-// Package classification SayItSocial.
+// Package api classification SayItSocial.
 //
 // Documentation of SayItSocialAPI.
 //
 //     Schemes: http
 //     BasePath:
 //     Version: 1.0.0
-//     Host: sayitsocial.in
+//     Host: sayitsocial-dev.ddns.net:8000
 //
 //     Consumes:
 //     - application/json
