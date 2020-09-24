@@ -171,7 +171,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // Validate user from hashes password
 func userIsValid(username string, password string, typeOfUser *string) bool {
-	model := auth.Initialize()
+	model := auth.Initialize(nil)
 	defer model.Close()
 
 	fetchUsers := model.Get(auth.Auth{Username: username})
@@ -205,7 +205,7 @@ func ValidateSession(w http.ResponseWriter, r *http.Request) bool {
 	val := session.Values[helpers.UsernameKey]
 
 	if val != nil {
-		model := auth.Initialize()
+		model := auth.Initialize(nil)
 		defer model.Close()
 
 		user := model.Get(auth.Auth{Username: val.(string)})

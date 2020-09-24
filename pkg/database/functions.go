@@ -38,11 +38,11 @@ func RunMigrations() error {
 func doMigrate(migrations *migrate.HttpFileSystemMigrationSource) error {
 	conn := GetConn()
 
-	_, err := migrate.Exec(conn, "postgres", migrations, migrate.Down)
+	// _, err := migrate.Exec(conn, "postgres", migrations, migrate.Down)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	n, err := migrate.Exec(conn, "postgres", migrations, migrate.Up)
 
