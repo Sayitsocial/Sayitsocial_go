@@ -115,7 +115,7 @@ func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 
 func getSructCreateArg(v reflect.Value, t reflect.StructField) interface{} {
 	for k := 0; k < v.NumField(); k++ {
-		if t.Type.Field(k).Tag.Get(helpers.RowStructTag) == t.Tag.Get("fr") && checkEmpty(v.Field(k)) {
+		if t.Type.Field(k).Tag.Get(helpers.RowStructTag) == t.Tag.Get("fr") && !checkEmpty(v.Field(k)) {
 			return v.Field(k).Interface()
 		}
 	}

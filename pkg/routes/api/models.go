@@ -58,7 +58,6 @@ func (u volCreReq) PutInDB() error {
 	}
 
 	modelAuth := auth.Initialize(tx)
-	defer modelAuth.Close()
 
 	uid := uuid.New().String()
 
@@ -75,7 +74,6 @@ func (u volCreReq) PutInDB() error {
 	}
 
 	modelData := voldata.Initialize(tx)
-	defer modelData.Close()
 
 	err = modelData.Create(voldata.VolData{
 		VolunteerID:  uid,
@@ -148,7 +146,6 @@ func (o orgCreReq) PutInDB() error {
 	}
 
 	modelAuth := auth.Initialize(tx)
-	defer modelAuth.Close()
 
 	uid := uuid.New().String()
 
@@ -165,7 +162,6 @@ func (o orgCreReq) PutInDB() error {
 	}
 
 	modelData := orgdata.Initialize(tx)
-	defer modelData.Close()
 
 	err = modelData.Create(orgdata.OrgData{
 		OrganisationID: uid,
@@ -266,7 +262,7 @@ func (e eventPostReq) PutInDB() error {
 		return err
 	}
 
-	categoryModel := categories.Initialize(tx)
+	categoryModel := categories.Initialize(nil)
 	defer categoryModel.Close()
 
 	// TODO: Use count here
@@ -277,7 +273,6 @@ func (e eventPostReq) PutInDB() error {
 	}
 
 	eventModel := event.Initialize(tx)
-	defer eventModel.Close()
 
 	eventID := uuid.New().String()
 
@@ -298,7 +293,6 @@ func (e eventPostReq) PutInDB() error {
 	}
 
 	eventHostBridgeModel := eventhost.Initialize(tx)
-	defer eventHostBridgeModel.Close()
 
 	err = eventHostBridgeModel.Create(eventhost.EventHostBridge{
 		Organisation: orgdata.OrgData{

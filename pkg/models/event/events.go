@@ -16,8 +16,8 @@ const (
 
 type Event struct {
 	EventID     string                   `row:"event_id" type:"exact" json:"event_id"`
-	Name        string                   `row:"name" type:"exact" json:"name"`
-	Description string                   `row:"description" type:"exact" json:"description"`
+	Name        string                   `row:"name" type:"like" json:"name"`
+	Description string                   `row:"description" type:"like" json:"description"`
 	StartTime   int64                    `row:"start_time" type:"exact" json:"start_time"`
 	HostTime    int64                    `row:"host_time" type:"exact" json:"host_time"`
 	Category    categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id"`
@@ -66,6 +66,8 @@ func (a Model) Create(data Event) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data Event) (event []Event) {
 	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
+	helpers.LogInfo(query)
+	helpers.LogInfo(args)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
