@@ -113,6 +113,15 @@ func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 	return query, args
 }
 
+func getSructCreateArg(v reflect.Value, t reflect.StructField) interface{} {
+	for k := 0; k < v.NumField(); k++ {
+		if t.Type.Field(k).Tag.Get(helpers.RowStructTag) == t.Tag.Get("fr") && checkEmpty(v.Field(k)) {
+			return v.Field(k).Interface()
+		}
+	}
+	return sql.NullString{}
+}
+
 // QueryBuilderCreate generates normal create queries for non nested structures
 func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(i)
@@ -125,22 +134,24 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 	for i := 0; i < v.NumField(); i++ {
 		row := t.Field(i).Tag.Get(helpers.RowStructTag)
 
-		if ok, typeOf := isPK(t.Field(i)); ok {
-			switch typeOf {
-			case autoPK:
-				continue
-			case manualPK:
-				val := uuid.New().String()
-				if row != "" {
-					if valuesCount != 0 {
-						query += ", " + row
-					} else {
-						query += row
+		if checkEmpty(v.Field(i)) {
+			if ok, typeOf := isPK(t.Field(i)); ok {
+				switch typeOf {
+				case autoPK:
+					continue
+				case manualPK:
+					uid := uuid.New().String()
+					if row != "" {
+						if valuesCount != 0 {
+							query += ", " + row
+						} else {
+							query += row
+						}
+						args = append(args, uid)
+						valuesCount++
 					}
-					args = append(args, val)
-					valuesCount++
+					continue
 				}
-				continue
 			}
 		}
 
@@ -150,7 +161,12 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 			} else {
 				query += row
 			}
-			args = append(args, v.Field(i).Interface())
+
+			if v.Field(i).Kind() == reflect.Struct {
+				args = append(args, getSructCreateArg(v.Field(i), t.Field(i)))
+			} else {
+				args = append(args, v.Field(i).Interface())
+			}
 			valuesCount++
 		}
 	}

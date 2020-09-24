@@ -22,11 +22,17 @@ type VolData struct {
 }
 
 type Model struct {
-	conn *sql.DB
+	trans *sql.Tx
+	conn  *sql.DB
 }
 
 // Initialize returns model of db with active connection
-func Initialize() *Model {
+func Initialize(tx *sql.Tx) *Model {
+	if tx != nil {
+		return &Model{
+			trans: tx,
+		}
+	}
 	return &Model{
 		conn: models.GetConn(schema, tableName),
 	}
@@ -45,11 +51,13 @@ func (a Model) Close() {
 func (a Model) Create(data VolData) error {
 	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
 
-	_, err := a.conn.Exec(query, args...)
-	if err != nil {
-		return err
+	var err error
+	if a.trans != nil {
+		_, err = a.trans.Exec(query, args...)
+	} else {
+		_, err = a.conn.Exec(query, args...)
 	}
-	return nil
+	return err
 }
 
 // Get data from db into slice of struct

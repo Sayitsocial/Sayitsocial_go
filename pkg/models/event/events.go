@@ -18,15 +18,23 @@ type Event struct {
 	EventID     string                   `row:"event_id" type:"exact" json:"event_id"`
 	Name        string                   `row:"name" type:"exact" json:"name"`
 	Description string                   `row:"description" type:"exact" json:"description"`
+	StartTime   int64                    `row:"start_time" type:"exact" json:"start_time"`
+	HostTime    int64                    `row:"host_time" type:"exact" json:"host_time"`
 	Category    categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id"`
 }
 
 type Model struct {
-	conn *sql.DB
+	conn  *sql.DB
+	trans *sql.Tx
 }
 
 // Initialize returns model of db with active connection
-func Initialize() *Model {
+func Initialize(tx *sql.Tx) *Model {
+	if tx != nil {
+		return &Model{
+			trans: tx,
+		}
+	}
 	return &Model{
 		conn: models.GetConn(schema, tableName),
 	}
@@ -45,11 +53,13 @@ func (a Model) Close() {
 func (a Model) Create(data Event) error {
 	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
 
-	_, err := a.conn.Exec(query, args...)
-	if err != nil {
-		return err
+	var err error
+	if a.trans != nil {
+		_, err = a.trans.Exec(query, args...)
+	} else {
+		_, err = a.conn.Exec(query, args...)
 	}
-	return nil
+	return err
 }
 
 // Get data from db into slice of struct
