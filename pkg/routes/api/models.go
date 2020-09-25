@@ -108,22 +108,6 @@ func (o orgCreReq) PutInDB() error {
 	return tx.Commit()
 }
 
-// CastToModel converts request struct to model struct
-func (e eventGetReq) CastToModel() (event.Event, error) {
-	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 {
-		return event.Event{}, errors.New("Requires one parameter")
-	}
-	return event.Event{
-		EventID:   e.EventID,
-		Name:      e.Name,
-		HostTime:  e.HostTime,
-		StartTime: e.StartTime,
-		Category: categories.EventCategory{
-			GeneratedID: e.Category,
-		},
-	}, nil
-}
-
 func (e eventPostReq) PutInDB() error {
 	if e.OrganisationID == "" && e.VolunteerID == "" {
 		return errors.New("One of organisation_id or volunteer_id must be present")
@@ -187,6 +171,22 @@ func (e eventPostReq) PutInDB() error {
 }
 
 // CastToModel converts request struct to model struct
+func (e eventGetReq) CastToModel() (event.Event, error) {
+	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 {
+		return event.Event{}, errors.New("Requires one parameter")
+	}
+	return event.Event{
+		EventID:   e.EventID,
+		Name:      e.Name,
+		HostTime:  e.HostTime,
+		StartTime: e.StartTime,
+		Category: categories.EventCategory{
+			GeneratedID: e.Category,
+		},
+	}, nil
+}
+
+// CastToModel converts request struct to model struct
 func (e eventHostReq) CastToModel() (eventhost.EventHostBridge, error) {
 	if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" && e.EventID == "" {
 		return eventhost.EventHostBridge{}, errors.New("Requires one parameter")
@@ -228,5 +228,13 @@ func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
 		DisplayName:    e.DisplayName,
 		Owner:          e.Owner,
 		TypeOfOrg:      e.TypeOfOrg,
+	}, nil
+}
+
+// CastToModel converts request struct to model struct
+func (e volGetReq) CastToModel() (voldata.VolData, error) {
+	return voldata.VolData{
+		VolunteerID: e.VolunteerID,
+		DisplayName: e.DisplayName,
 	}, nil
 }

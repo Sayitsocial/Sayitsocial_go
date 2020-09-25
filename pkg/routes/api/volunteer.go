@@ -6,7 +6,6 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
 )
 
 // Signup details for Volunteer
@@ -85,14 +84,6 @@ type volGetReq struct {
 	// Name of organisation
 	// in: query
 	DisplayName string `schema:"display_name" json:"display_name"`
-}
-
-// CastToModel converts request struct to model struct
-func (e volGetReq) CastToModel() (voldata.VolData, error) {
-	return voldata.VolData{
-		VolunteerID: e.VolunteerID,
-		DisplayName: e.DisplayName,
-	}, nil
 }
 
 // swagger:route GET /api/vol/get volunteer getVolunteer

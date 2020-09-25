@@ -19,8 +19,10 @@ func (a Api) Register(r *mux.Router) {
 
 	apiRouter.HandleFunc("/vol/create", volCreateHandler).Methods("POST")
 	apiRouter.HandleFunc("/vol/get", volGetHandler).Methods("GET")
+
 	apiRouter.HandleFunc("/org/create", orgCreateHandler).Methods("POST")
 	apiRouter.HandleFunc("/org/get", orgGetHandler).Methods("GET")
+
 	apiRouter.HandleFunc("/event/create", eventCreateHandler).Methods("POST")
 	apiRouter.HandleFunc("/event/get", eventGetHandler).Methods("GET")
 	apiRouter.HandleFunc("/event/host", eventHostBridge).Methods("GET")
