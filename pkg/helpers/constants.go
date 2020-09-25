@@ -23,6 +23,7 @@ const (
 	SessionsKey = "SESSIONID"
 	PrevURLKey  = "prevurl"
 	AuthTypeKey = "type"
+	UserTypeKey = "typeofUser"
 
 	LoginURL   = "/auth/login/"
 	HomeURLVol = "/index-vol.html"

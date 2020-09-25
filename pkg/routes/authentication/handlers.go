@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
@@ -64,12 +65,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := SessionsStore.Get(r, helpers.SessionsKey)
 
-	// If user is already logged in, don't show login page again until logout
-	// if ValidateSession(w, r) {
-	// 	routes.Redirect(w, r, "/home", routes.StatusFound)
-	// 	return
-	// }
-
 	err := r.ParseForm()
 	if err != nil {
 		helpers.LogError(err.Error())
@@ -85,14 +80,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if creds.Username != "" && creds.Password == "" {
-		var typeOfUser string
-		if userIsValid(creds.Username, creds.Password, &typeOfUser) {
+		if ok, typeOfUser := isUserValid(creds.Username, creds.Password); ok {
 
 			// Since session key is randomly hashed, its value doesn't matter
 			session.Values[helpers.UsernameKey] = creds.Username
+			session.Values[helpers.UserTypeKey] = typeOfUser
 
 			// TODO: Set proper max age
-			session.Options.MaxAge = 30 * 60
+			session.Options.MaxAge = int((30 * time.Minute).Seconds())
 
 			err := session.Save(r, w)
 			if err != nil {
@@ -100,17 +95,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-
-			// Redirect to respective page depending on type of user
-			switch typeOfUser {
-			case helpers.AuthTypeOrg:
-				http.Redirect(w, r, helpers.HomeURLOrg, http.StatusOK)
-				return
-			case helpers.AuthTypeVol:
-				http.Redirect(w, r, helpers.HomeURLVol, http.StatusOK)
-				return
-			}
-			return
 		}
 
 		// TODO: Should display error on page
@@ -170,7 +154,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Validate user from hashes password
-func userIsValid(username string, password string, typeOfUser *string) bool {
+func isUserValid(username string, password string) (bool, string) {
 	model := auth.Initialize(nil)
 	defer model.Close()
 
@@ -181,13 +165,12 @@ func userIsValid(username string, password string, typeOfUser *string) bool {
 			err := bcrypt.CompareHashAndPassword([]byte(hashedPass), []byte(password))
 			if err != nil {
 				helpers.LogError(err.Error())
-				return false
+				return false, ""
 			}
-			*typeOfUser = fetchUsers[0].TypeOfUser
-			return true
+			return true, fetchUsers[0].TypeOfUser
 		}
 	}
-	return false
+	return false, ""
 }
 
 // ValidateSession compares session key to server and validates
