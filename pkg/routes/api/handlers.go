@@ -8,6 +8,7 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -25,14 +26,17 @@ func (a Api) Register(r *mux.Router) {
 
 	// apiRouter.Use(middleware.AuthMiddleware())
 
-	apiRouter.HandleFunc("/create/vol", volCreateHandler).Methods("POST")
-	apiRouter.HandleFunc("/create/org", orgCreateHandler).Methods("POST")
-	apiRouter.HandleFunc("/event", eventHandler).Methods("POST", "GET")
+	apiRouter.HandleFunc("/vol/create", volCreateHandler).Methods("POST")
+	apiRouter.HandleFunc("/vol/get", volGetHandler).Methods("GET")
+	apiRouter.HandleFunc("/org/create", orgCreateHandler).Methods("POST")
+	apiRouter.HandleFunc("/org/get", orgGetHandler).Methods("GET")
+	apiRouter.HandleFunc("/event/create", eventCreateHandler).Methods("POST")
+	apiRouter.HandleFunc("/event/get", eventGetHandler).Methods("GET")
 	apiRouter.HandleFunc("/event/host", eventHostBridge).Methods("GET")
 	apiRouter.HandleFunc("/event/attendee", eventAttendeeBridge).Methods("GET")
 }
 
-// swagger:route POST /api/create/vol user_creation createVolunteer
+// swagger:route POST /api/vol/create volunteer createVolunteer
 //
 // Create a new volunteer
 //
@@ -72,7 +76,7 @@ func volCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// swagger:route POST /api/create/org user_creation createOrganisation
+// swagger:route POST /api/org/create organisation createOrganisation
 //
 // Create a new organisation
 //
@@ -203,84 +207,180 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func eventHandler(w http.ResponseWriter, r *http.Request) {
+// swagger:route GET /api/event/get event getEvent
+//
+// Get details of event
+// Atleast one param is required
+//
+// This will show create a new volunteer.
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       200: successResponse
+func eventGetHandler(w http.ResponseWriter, r *http.Request) {
+	var req eventGetReq
+	err := decoder.Decode(&req, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	data, err := req.CastToModel()
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	model := event.Initialize(nil)
 	defer model.Close()
+	err = json.NewEncoder(w).Encode(model.Get(data))
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
 
-	if r.Method == "GET" {
-		// swagger:route GET /api/event event getEvent
-		//
-		// Get details of event
-		// Atleast one param is required
-		//
-		// This will show create a new volunteer.
-		//
-		//     Consumes:
-		//     - application/x-www-form-urlencoded
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http
-		//
-		//
-		//     Security:
-		//       cookieAuth
-		//
-		//     Responses:
-		//       200: successResponse
-		var req eventGetReq
-		err := decoder.Decode(&req, r.URL.Query())
-		if err != nil {
-			helpers.LogError(err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		data, err := req.CastToModel()
-		if err != nil {
-			helpers.LogError(err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		err = json.NewEncoder(w).Encode(model.Get(data))
-		if err != nil {
-			helpers.LogError(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	} else if r.Method == "POST" {
-		// swagger:route POST /api/event event createEvent
-		//
-		// Create a new event
-		//
-		// This will show create a new volunteer.
-		//
-		//     Consumes:
-		//     - application/x-www-form-urlencoded
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http
-		//
-		//
-		//     Security:
-		//       cookieAuth
-		//
-		//     Responses:
-		//       200: successResponse
-		var req eventPostReq
-		err := decoder.Decode(&req, r.URL.Query())
-		if err != nil {
-			helpers.LogError(err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		err = req.PutInDB()
-		if err != nil {
-			helpers.LogError(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+// swagger:route POST /api/event/create event createEvent
+//
+// Create a new event
+//
+// This will show create a new volunteer.
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       200: successResponse
+func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
+	model := event.Initialize(nil)
+	defer model.Close()
+	var req eventPostReq
+	err := decoder.Decode(&req, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = req.PutInDB()
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// swagger:route GET /api/org/get organisation getOrganisation
+//
+// Get attendees of event
+// Atleast one param is required
+//
+// This will show create a new volunteer.
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       200: successResponse
+func orgGetHandler(w http.ResponseWriter, r *http.Request) {
+	var req orgGetReq
+	err := decoder.Decode(&req, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	data, err := req.CastToModel()
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	model := orgdata.Initialize(nil)
+	defer model.Close()
+
+	err = json.NewEncoder(w).Encode(model.Get(data))
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// swagger:route GET /api/vol/get volunteer getVolunteer
+//
+// Get attendees of event
+// Atleast one param is required
+//
+// This will show create a new volunteer.
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       200: successResponse
+func volGetHandler(w http.ResponseWriter, r *http.Request) {
+	var req orgGetReq
+	err := decoder.Decode(&req, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	data, err := req.CastToModel()
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	model := orgdata.Initialize(nil)
+	defer model.Close()
+
+	err = json.NewEncoder(w).Encode(model.Get(data))
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }

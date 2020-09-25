@@ -333,9 +333,9 @@ type eventHostReq struct {
 
 // CastToModel converts request struct to model struct
 func (e eventHostReq) CastToModel() (eventhost.EventHostBridge, error) {
-	// if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" {
-	// 	return event.Event{}, errors.New("Requires one parameter")
-	// }
+	if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" && e.EventID == "" {
+		return eventhost.EventHostBridge{}, errors.New("Requires one parameter")
+	}
 	return eventhost.EventHostBridge{
 		GeneratedID: e.GeneratedID,
 		Organisation: orgdata.OrgData{
@@ -370,9 +370,9 @@ type eventAttendeeReq struct {
 
 // CastToModel converts request struct to model struct
 func (e eventAttendeeReq) CastToModel() (eventattendee.EventAttendeeBridge, error) {
-	// if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" {
-	// 	return event.Event{}, errors.New("Requires one parameter")
-	// }
+	if e.GeneratedID == "" && e.VolunteerID == "" {
+		return eventattendee.EventAttendeeBridge{}, errors.New("Requires one parameter")
+	}
 	return eventattendee.EventAttendeeBridge{
 		GeneratedID: e.GeneratedID,
 		Volunteer: voldata.VolData{
@@ -381,5 +381,59 @@ func (e eventAttendeeReq) CastToModel() (eventattendee.EventAttendeeBridge, erro
 		Event: event.Event{
 			EventID: e.EventID,
 		},
+	}, nil
+}
+
+// Event details
+//
+//swagger:parameters getOrganisation
+type orgGetReq struct {
+
+	// Organisation ID
+	// in: query
+	OrganisationID string `schema:"organisation_id" json:"organisation_id"`
+
+	// Name of organisation
+	// in: query
+	DisplayName string `schema:"display_name" json:"display_name"`
+
+	// Owner of organisation
+	// in: query
+	Owner string `schema:"owner" json:"owner"`
+
+	// Type of organisation
+	// in: query
+	TypeOfOrg int `schema:"type_of_org" json:"type_of_org"`
+}
+
+// CastToModel converts request struct to model struct
+func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
+	return orgdata.OrgData{
+		OrganisationID: e.OrganisationID,
+		DisplayName:    e.DisplayName,
+		Owner:          e.Owner,
+		TypeOfOrg:      e.TypeOfOrg,
+	}, nil
+}
+
+// Event details
+//
+//swagger:parameters getVolunteer
+type volGetReq struct {
+
+	// Organisation ID
+	// in: query
+	VolunteerID string `schema:"organisation_id" json:"organisation_id"`
+
+	// Name of organisation
+	// in: query
+	DisplayName string `schema:"display_name" json:"display_name"`
+}
+
+// CastToModel converts request struct to model struct
+func (e volGetReq) CastToModel() (voldata.VolData, error) {
+	return voldata.VolData{
+		VolunteerID: e.VolunteerID,
+		DisplayName: e.DisplayName,
 	}, nil
 }
