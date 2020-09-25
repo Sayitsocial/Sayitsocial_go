@@ -1,13 +1,13 @@
 package authentication
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
@@ -16,7 +16,7 @@ import (
 
 var decoder = schema.NewDecoder()
 
-// Authentication is just an interface to register authentication routes
+// Authentication is an empty struct overloading app interface
 type Authentication struct {
 }
 
@@ -54,6 +54,7 @@ func (a Authentication) Register(r *mux.Router) {
 //
 //     Responses:
 //       200: successResponse
+//		 401: unauthorizedError
 /*
  * Handles authenticating user and displaying login page
  * Should redirect to respective page
@@ -95,14 +96,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			common.WriteSuccess(w)
 		}
 
 		// TODO: Should display error on page
-		encoder := json.NewEncoder(w)
-		encoder.SetIndent("", "\t")
-		err := encoder.Encode(&invalidCredentialsError{
-			Body: Body{Message: helpers.InvalidCredentialsError},
-		})
+		w.WriteHeader(http.StatusUnauthorized)
+		err := common.WriteError("invalid credentials", w)
 		if err != nil {
 			helpers.LogError(err.Error())
 		}
@@ -147,10 +146,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = fmt.Fprintf(w, helpers.HTTPSuccessMessage)
-	if err != nil {
-		helpers.LogError(err.Error())
-	}
+	common.WriteSuccess(w)
 }
 
 // Validate user from hashes password

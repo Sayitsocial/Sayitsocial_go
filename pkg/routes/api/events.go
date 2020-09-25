@@ -8,6 +8,7 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
 // Event details
@@ -58,13 +59,15 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 
@@ -74,8 +77,13 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		common.WriteError(err.Error(), w)
 		return
+	}
+	err = common.WriteSuccess(w)
+	if err != nil {
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -123,13 +131,15 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 
@@ -139,8 +149,13 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		common.WriteError(err.Error(), w)
 		return
+	}
+	err = common.WriteSuccess(w)
+	if err != nil {
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -196,13 +211,15 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 
@@ -211,8 +228,13 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		common.WriteError(err.Error(), w)
 		return
+	}
+	err = common.WriteSuccess(w)
+	if err != nil {
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -273,13 +295,19 @@ func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 	err = req.PutInDB()
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
+	}
+	err = common.WriteSuccess(w)
+	if err != nil {
+		helpers.LogError(err.Error())
 	}
 }

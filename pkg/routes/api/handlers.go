@@ -7,10 +7,12 @@ import (
 
 var decoder = schema.NewDecoder()
 
-type Api struct {
+// API is an empty struct overloading an App interface
+type API struct {
 }
 
-func (a Api) Register(r *mux.Router) {
+// Register registers the api router for api endpoints
+func (a API) Register(r *mux.Router) {
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.StrictSlash(false)

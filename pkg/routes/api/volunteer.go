@@ -6,6 +6,7 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
 // Signup details for Volunteer
@@ -62,6 +63,7 @@ func volCreateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.LogError("Error in GET parameters : " + err.Error())
 		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 
@@ -70,7 +72,13 @@ func volCreateHandler(w http.ResponseWriter, r *http.Request) {
 	err = req.PutInDB()
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
+		return
+	}
+	err = common.WriteSuccess(w)
+	if err != nil {
+		helpers.LogError(err.Error())
 	}
 }
 
@@ -112,13 +120,15 @@ func volGetHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		common.WriteError(err.Error(), w)
 		return
 	}
 
@@ -128,7 +138,12 @@ func volGetHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		common.WriteError(err.Error(), w)
 		return
+	}
+	err = common.WriteSuccess(w)
+	if err != nil {
+		helpers.LogError(err.Error())
 	}
 }

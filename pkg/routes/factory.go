@@ -17,7 +17,7 @@ type App interface {
 	Register(r *mux.Router)
 }
 
-var apps = []App{api.Api{}, authentication.Authentication{}, sayitsocial.Sayitsocial{}}
+var apps = []App{api.API{}, authentication.Authentication{}, sayitsocial.Sayitsocial{}}
 
 // RegisterApps registers all sub routes
 func RegisterApps(r *mux.Router) {
