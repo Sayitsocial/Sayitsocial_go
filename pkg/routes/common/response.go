@@ -41,7 +41,7 @@ func WriteSuccess(w http.ResponseWriter) error {
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(&SuccessResponse{
 		Body: Body{
-			Message: "Success",
+			Message: "success",
 		},
 	})
 	if err != nil {
