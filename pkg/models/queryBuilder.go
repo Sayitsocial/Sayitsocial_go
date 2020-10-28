@@ -12,12 +12,6 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/google/uuid"
-)
-
-const (
-	autoPK   = "auto"
-	manualPK = "manual"
 )
 
 type tmpHolder struct {
@@ -52,28 +46,48 @@ func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 	}()
 }
 
-func getSearchBy(inte interface{}, tableName string) (totalSearchByCount int, searchBy []tmpHolder) {
+func getSearchBy(inte interface{}, tableName string, appendTableName bool) (totalSearchByCount int, searchBy []tmpHolder) {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).Kind() == reflect.Struct {
-			if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
-				tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), foreignTable)
-				totalSearchByCount += tmpCount
-				searchBy = append(searchBy, tmpSearchBy...)
-			} else {
-				tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), tableName)
-				totalSearchByCount += tmpCount
-				searchBy = append(searchBy, tmpSearchBy...)
+			if appendTableName {
+				if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
+					tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), foreignTable, true)
+					totalSearchByCount += tmpCount
+					searchBy = append(searchBy, tmpSearchBy...)
+				} else {
+					tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), tableName, true)
+					totalSearchByCount += tmpCount
+					searchBy = append(searchBy, tmpSearchBy...)
+				}
+				continue
 			}
-			continue
 		}
 		if !checkEmpty(v.Field(i)) {
 			if val := t.Field(i).Tag.Get("type"); val != "" {
 				searchBy = append(searchBy, tmpHolder{
-					name:   fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag)),
+					name: func() string {
+						if !appendTableName {
+							return fmt.Sprintf("%s ", t.Field(i).Tag.Get(helpers.RowStructTag))
+						} else {
+							return fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+						}
+					}(),
 					typeOf: val,
-					value:  v.Field(i),
+					value: func() reflect.Value {
+						if v.Field(i).Kind() == reflect.Struct {
+							tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), "", false)
+							if tmpCount > 0 {
+								if tmpSearchBy[0].value.Kind() != reflect.Struct {
+									return tmpSearchBy[0].value
+								}
+							}
+							return reflect.ValueOf(nil)
+
+						}
+						return v.Field(i)
+					}(),
 				})
 				totalSearchByCount++
 			}
@@ -106,7 +120,7 @@ func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, 
 func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 	query := `SELECT ` + getAllMembers(i, tableName, true)
 
-	args, where := getArgsWhere(getSearchBy(i, tableName))
+	args, where := getArgsWhere(getSearchBy(i, tableName, true))
 	query += " FROM " + tableName
 	query += where
 
@@ -135,23 +149,8 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 		row := t.Field(i).Tag.Get(helpers.RowStructTag)
 
 		if checkEmpty(v.Field(i)) {
-			if ok, typeOf := isPK(t.Field(i)); ok {
-				switch typeOf {
-				case autoPK:
-					continue
-				case manualPK:
-					uid := uuid.New().String()
-					if row != "" {
-						if valuesCount != 0 {
-							query += ", " + row
-						} else {
-							query += row
-						}
-						args = append(args, uid)
-						valuesCount++
-					}
-					continue
-				}
+			if ok, _ := isPK(t.Field(i)); ok {
+				continue
 			}
 		}
 
@@ -262,7 +261,7 @@ func getInnerJoin(inte interface{}, tableName string) string {
 
 // QueryBuilderJoin generates get queries for nested structures with inner join support
 func QueryBuilderJoin(inte interface{}, tableName string) (string, []interface{}) {
-	args, where := getArgsWhere(getSearchBy(inte, tableName))
+	args, where := getArgsWhere(getSearchBy(inte, tableName, true))
 	query := fmt.Sprintf("SELECT %s FROM %s %s %s", getAllMembers(inte, tableName, true), tableName, getInnerJoin(inte, tableName), where)
 	return query, args
 }
@@ -274,12 +273,12 @@ func QueryBuilderCount(inte interface{}, tableName string) (string, []interface{
 
 	var pk string = "*"
 	for i := 0; i < v.NumField(); i++ {
-		if ok, val := isPK(t.Field(i)); ok {
-			pk = val
+		if ok, _ := isPK(t.Field(i)); ok {
+			pk = t.Field(i).Tag.Get("row")
 			break
 		}
 	}
-	args, where := getArgsWhere(getSearchBy(inte, tableName))
+	args, where := getArgsWhere(getSearchBy(inte, tableName, false))
 
 	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, tableName, where), args
 }
