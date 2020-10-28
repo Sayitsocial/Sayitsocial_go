@@ -15,7 +15,7 @@ const (
 )
 
 type Event struct {
-	EventID     string                   `row:"event_id" type:"exact" json:"event_id"`
+	EventID     string                   `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
 	Name        string                   `row:"name" type:"like" json:"name"`
 	Description string                   `row:"description" type:"like" json:"description"`
 	StartTime   int64                    `row:"start_time" type:"exact" json:"start_time"`
@@ -82,6 +82,7 @@ func (a Model) Get(data Event) (event []Event) {
 // Count gets count of rows corresponsing to provided search params
 func (a Model) Count(data Event) (count []int) {
 	query, args := models.QueryBuilderCount(data, schema+"."+tableName)
+	helpers.LogInfo(query)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
