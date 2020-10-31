@@ -22,7 +22,6 @@ var apps = []App{api.API{}, authentication.Authentication{}, sayitsocial.Sayitso
 // RegisterApps registers all sub routes
 func RegisterApps(r *mux.Router) {
 	r.Use(middleware.CorsMiddleware())
-	r.Use(middleware.RedirectMiddleware())
 	for _, i := range apps {
 		i.Register(r)
 	}
@@ -30,11 +29,11 @@ func RegisterApps(r *mux.Router) {
 
 // RegisterFileServer registers all static fileservers
 func RegisterFileServer(r *mux.Router) {
-	r.PathPrefix("/devhtml").Handler(http.StripPrefix("/devhtml",
-		http.FileServer(http.Dir(helpers.StaticPath)),
-	))
-
 	r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/",
 		http.FileServer(http.Dir(helpers.SwaggerPath)),
+	))
+
+	r.PathPrefix("/").Handler(http.StripPrefix("/",
+		http.FileServer(http.Dir(helpers.StaticPath)),
 	))
 }
