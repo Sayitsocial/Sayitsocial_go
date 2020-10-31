@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/middleware"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 )
@@ -17,7 +18,7 @@ func (a API) Register(r *mux.Router) {
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.StrictSlash(false)
 
-	// apiRouter.Use(middleware.AuthMiddleware())
+	apiRouter.Use(middleware.AuthMiddleware())
 
 	apiRouter.HandleFunc("/vol/create", volCreateHandler).Methods("POST")
 	apiRouter.HandleFunc("/vol/get", volGetHandler).Methods("GET")

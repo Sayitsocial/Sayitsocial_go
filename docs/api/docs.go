@@ -15,13 +15,19 @@
 //
 //     Security:
 //     - cookieAuth
+//     - JWTAuth
 //
 //     SecurityDefinitions:
-//     cookieAuth:
-//       type: apiKey
-//       in: cookie
-//       name: SESSIONID
-//       description: Doesnt work from swagger, head over to /login
+//       cookieAuth:
+//         type: apiKey
+//         in: cookie
+//         name: SESSIONID
+//         description: Doesnt work from swagger, head over to /login
+//       JWTAuth:
+//         type: apiKey
+//         in: header
+//         name: Authorization
+//         description: Get token from /auth/jwt-login
 //
 // swagger:meta
 package api

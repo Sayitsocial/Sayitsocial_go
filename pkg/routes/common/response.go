@@ -37,6 +37,7 @@ func writeBody(message string) Body {
 
 // WriteSuccess writes success to http.ResponseWriter
 func WriteSuccess(w http.ResponseWriter) error {
+	w.WriteHeader(http.StatusOK)
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(&SuccessResponse{
@@ -51,7 +52,8 @@ func WriteSuccess(w http.ResponseWriter) error {
 }
 
 // WriteError writes error to http.ResponseWriter
-func WriteError(message string, w http.ResponseWriter) error {
+func WriteError(message string, statusCode int, w http.ResponseWriter) error {
+	w.WriteHeader(statusCode)
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(&ErrorResponse{

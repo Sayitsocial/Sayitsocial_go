@@ -59,15 +59,13 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 
@@ -77,8 +75,7 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
 	}
 	err = common.WriteSuccess(w)
@@ -122,7 +119,7 @@ type eventAttendeeReq struct {
 //
 //
 //     Security:
-//       cookieAuth
+//		 - JWTAuth: []
 //
 //     Responses:
 //       200: successResponse
@@ -131,15 +128,13 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 
@@ -149,8 +144,7 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
 	}
 	err = common.WriteSuccess(w)
@@ -211,15 +205,13 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 
@@ -228,8 +220,7 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(model.Get(data))
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
 	}
 	err = common.WriteSuccess(w)
@@ -295,15 +286,13 @@ func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&req, r.URL.Query())
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 	err = req.PutInDB()
 	if err != nil {
 		helpers.LogError(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		common.WriteError(err.Error(), w)
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
 	err = common.WriteSuccess(w)

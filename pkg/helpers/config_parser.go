@@ -41,6 +41,12 @@ func writeInitial() error {
 		err := write()
 		return err
 	}
+
+	if string(GetJWTKey()) == "" {
+		viper.Set("jwtkey", generateRandomKey(64))
+		err := write()
+		return err
+	}
 	return nil
 }
 
@@ -52,6 +58,10 @@ func GetSessionsKey() []byte {
 // GetEncryptionKey returns encryption key for session store
 func GetEncryptionKey() []byte {
 	return []byte(viper.GetString("encryptionkey"))
+}
+
+func GetJWTKey() []byte {
+	return []byte(viper.GetString("jwtkey"))
 }
 
 func write() error {

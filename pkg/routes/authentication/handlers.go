@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
@@ -35,6 +37,8 @@ func (a Authentication) Register(r *mux.Router) {
 
 	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
+	authRouter.HandleFunc("/jwt-login", jwtLoginHandler).Methods("GET")
+	authRouter.HandleFunc("/jwt-refresh", jwtRefreshHandler).Methods("GET")
 	authRouter.HandleFunc("/isLogged", isLogged).Methods("GET")
 }
 
@@ -80,7 +84,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if creds.Username != "" && creds.Password == "" {
+	if creds.Username != "" && creds.Password != "" {
 		if ok, typeOfUser := isUserValid(creds.Username, creds.Password); ok {
 
 			// Since session key is randomly hashed, its value doesn't matter
@@ -97,15 +101,145 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			common.WriteSuccess(w)
+			return
 		}
 
 		// TODO: Should display error on page
-		w.WriteHeader(http.StatusUnauthorized)
-		err := common.WriteError("invalid credentials", w)
+		err := common.WriteError("invalid credentials", http.StatusUnauthorized, w)
 		if err != nil {
 			helpers.LogError(err.Error())
 		}
 		return
+	}
+}
+
+// jwtLoginHandler
+// swagger:route GET /auth/jwt-login auth JWTLogin
+//
+// Login to existing account
+//
+//
+//     Consumes:
+//     - application/json
+//
+//
+//     Schemes: http
+//
+//
+//     Security:
+//
+//     Responses:
+//       200: JWTLoginResp
+//		 401: unauthorizedError
+func jwtLoginHandler(w http.ResponseWriter, r *http.Request) {
+	var creds LoginReq
+	err := decoder.Decode(&creds, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	helpers.LogInfo(creds)
+	if creds.Username != "" && creds.Password != "" {
+		if ok, _ := isUserValid(creds.Username, creds.Password); ok {
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				helpers.UsernameKey: creds.Username,
+				"expiry":            time.Now().Add(time.Hour * time.Duration(1)).Unix(),
+				"iat":               time.Now().Unix(),
+			})
+			tokenString, err := token.SignedString(helpers.GetJWTKey())
+			if err != nil {
+				err := common.WriteError("Token generation failed", http.StatusInternalServerError, w)
+				if err != nil {
+					helpers.LogError(err.Error())
+				}
+				return
+			}
+			err = json.NewEncoder(w).Encode(JWTResp{
+				Token: tokenString,
+			})
+
+			helpers.LogInfo(tokenString)
+			if err != nil {
+				helpers.LogError(err.Error())
+				common.WriteError(err.Error(), http.StatusInternalServerError, w)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	}
+	err = common.WriteError("invalid credentials", http.StatusUnauthorized, w)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
+	return
+}
+
+// jwtRefreshHandler
+// swagger:route GET /auth/jwt-refresh auth JWTRefresh
+//
+// Login to existing account
+//
+//
+//     Consumes:
+//     - application/json
+//
+//
+//     Schemes: http
+//
+//
+//     Security:
+//
+//     Responses:
+//       200: JWTLoginResp
+//		 401: unauthorizedError
+func jwtRefreshHandler(w http.ResponseWriter, r *http.Request) {
+	var tokenPrev JWTRefreshReq
+	err := decoder.Decode(&tokenPrev, r.URL.Query())
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	token, err := jwt.ParseWithClaims(tokenPrev.Token, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if token.Method.Alg() == jwt.SigningMethodHS256.Alg() {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Method.Alg())
+		}
+		return helpers.GetJWTKey(), nil
+	})
+	if err != nil {
+		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			helpers.UsernameKey: claims[helpers.UsernameKey],
+			"expiry":            time.Now().Add(time.Hour * time.Duration(1)).Unix(),
+			"iat":               time.Now().Unix(),
+		})
+		tokenString, err := newToken.SignedString(helpers.GetJWTKey())
+		if err != nil {
+			err := common.WriteError("Token generation failed", http.StatusInternalServerError, w)
+			if err != nil {
+				helpers.LogError(err.Error())
+			}
+			return
+		}
+		err = json.NewEncoder(w).Encode(JWTResp{
+			Token: tokenString,
+		})
+
+		if err != nil {
+			helpers.LogError(err.Error())
+			common.WriteError(err.Error(), http.StatusInternalServerError, w)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		return
+
 	}
 }
 
