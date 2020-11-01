@@ -5,20 +5,13 @@ import (
 	"net/http"
 )
 
-// Body contains body of response
-type Body struct {
-	// The validation message
-	//
-	// Required: true
-	Message string `json:"message"`
-}
-
 // SuccessResponse ...
-// swagger:response SuccessResponse
+// swagger:response successResponse
 type SuccessResponse struct {
 	// Success message
 	// in: body
-	Body Body
+	// Required: true
+	Message string `json:"message"`
 }
 
 // ErrorResponse ...
@@ -26,13 +19,8 @@ type SuccessResponse struct {
 type ErrorResponse struct {
 	// The error message
 	// in: body
-	Body Body
-}
-
-func writeBody(message string) Body {
-	return Body{
-		Message: message,
-	}
+	// Required: true
+	Message string `json:"message"`
 }
 
 // WriteSuccess writes success to http.ResponseWriter
@@ -41,9 +29,7 @@ func WriteSuccess(w http.ResponseWriter) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(&SuccessResponse{
-		Body: Body{
-			Message: "success",
-		},
+		Message: "success",
 	})
 	if err != nil {
 		return err
@@ -57,9 +43,7 @@ func WriteError(message string, statusCode int, w http.ResponseWriter) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	err := encoder.Encode(&ErrorResponse{
-		Body: Body{
-			Message: message,
-		},
+		Message: message,
 	})
 	if err != nil {
 		return err

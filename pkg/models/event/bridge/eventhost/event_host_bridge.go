@@ -16,11 +16,12 @@ const (
 	schema    = "public"
 )
 
+// swagger:model
 type EventHostBridge struct {
 	GeneratedID  string          `row:"generated_id" type:"exact" pk:"manual" json:"generated_id"`
-	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation_id" fk:"organisation.organisation" fr:"organisation"`
-	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer_id" fk:"volunteer.volunteer" fr:"volunteer"`
-	Event        event.Event     `row:"event_id" type:"exact" json:"event_id" fk:"public.events" fr:"event"`
+	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation" fk:"organisation.organisation" fr:"organisation_id"`
+	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer" fk:"volunteer.volunteer" fr:"volunteer_id"`
+	Event        event.Event     `row:"event_id" type:"exact" json:"event" fk:"public.events" fr:"event_id"`
 }
 
 type Model struct {
@@ -66,6 +67,7 @@ func (a Model) Create(data EventHostBridge) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data EventHostBridge) (eventHostBridge []EventHostBridge) {
 	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
+	helpers.LogInfo(query)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {

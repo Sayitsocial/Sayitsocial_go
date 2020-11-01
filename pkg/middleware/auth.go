@@ -2,11 +2,11 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/authentication"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
-	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )
@@ -34,13 +34,25 @@ func JWTCheck(w http.ResponseWriter, r *http.Request) bool {
 		helpers.LogError("JWT Auth key empty")
 		return false
 	}
-	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return (helpers.GetJWTKey()), nil
-		},
-		SigningMethod: jwt.SigningMethodHS256,
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return false
+	}
+
+	authHeaderParts := strings.Fields(authHeader)
+	if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
+		return false
+	}
+
+	token, err := jwt.Parse(authHeaderParts[1], func(token *jwt.Token) (interface{}, error) {
+		return helpers.GetJWTKey(), nil
 	})
-	if jwtMiddleware.CheckJWT(w, r) != nil {
+	if err != nil {
+		helpers.LogError(err.Error())
+		return false
+	}
+	if token.Valid && token.Method.Alg() == jwt.SigningMethodHS256.Alg() {
 		return true
 	}
 	return false

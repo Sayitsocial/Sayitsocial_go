@@ -14,6 +14,7 @@ const (
 	schema    = "public"
 )
 
+// swagger:model
 type Event struct {
 	EventID     string                   `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
 	Name        string                   `row:"name" type:"like" json:"name"`

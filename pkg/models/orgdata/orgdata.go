@@ -12,6 +12,7 @@ const (
 	schema    = helpers.DbSchemaOrg
 )
 
+// swagger:model
 type OrgData struct {
 	OrganisationID string `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
 	DisplayName    string `row:"display_name" type:"like" json:"display_name"`

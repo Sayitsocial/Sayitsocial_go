@@ -54,7 +54,7 @@ type orgCreReq struct {
 //
 // Create a new organisation
 //
-// This will show create a new volunteer.
+// This will show create a new organisation.
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -112,12 +112,18 @@ type orgGetReq struct {
 	TypeOfOrg int `schema:"type_of_org" json:"type_of_org"`
 }
 
+// swagger:response orgResponse
+type orgResponse struct {
+	// in: body
+	org orgdata.OrgData
+}
+
 // swagger:route GET /api/org/get organisation getOrganisation
 //
-// Get attendees of event
-// Atleast one param is required
+// Get details of an organisation
 //
-// This will show create a new volunteer.
+// This will details of an organisation.
+// Atleast one param is required
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -132,7 +138,7 @@ type orgGetReq struct {
 //       cookieAuth
 //
 //     Responses:
-//       200: successResponse
+//       200: orgResponse
 func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgGetReq
 	err := decoder.Decode(&req, r.URL.Query())
@@ -156,9 +162,5 @@ func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
-	}
-	err = common.WriteSuccess(w)
-	if err != nil {
-		helpers.LogError(err.Error())
 	}
 }

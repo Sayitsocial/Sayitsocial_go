@@ -6,6 +6,7 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
@@ -39,7 +40,7 @@ type volCreReq struct {
 //
 // Create a new volunteer
 //
-// This will show create a new volunteer.
+// This will create a new volunteer.
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -89,12 +90,18 @@ type volGetReq struct {
 	DisplayName string `schema:"display_name" json:"display_name"`
 }
 
+// swagger:response volResponse
+type volResponse struct {
+	// in: body
+	vol voldata.VolData
+}
+
 // swagger:route GET /api/vol/get volunteer getVolunteer
 //
-// Get attendees of event
-// Atleast one param is required
+// Get details of a volunteer
 //
-// This will show create a new volunteer.
+// This will show details of a volunteer.
+// Atleast one param is required
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -109,7 +116,7 @@ type volGetReq struct {
 //       cookieAuth
 //
 //     Responses:
-//       200: successResponse
+//       200: volResponse
 func volGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgGetReq
 	err := decoder.Decode(&req, r.URL.Query())
@@ -133,9 +140,5 @@ func volGetHandler(w http.ResponseWriter, r *http.Request) {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
-	}
-	err = common.WriteSuccess(w)
-	if err != nil {
-		helpers.LogError(err.Error())
 	}
 }

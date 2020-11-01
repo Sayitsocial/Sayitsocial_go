@@ -33,12 +33,18 @@ type eventHostReq struct {
 	EventID string `schema:"event_id" json:"event_id"`
 }
 
+// swagger:response eventHostResponse
+type eventHostResp struct {
+	// in: body
+	eventHost eventhost.EventHostBridge
+}
+
 // swagger:route GET /api/event/host event getEventHost
 //
 // Get hosts of event
-// Atleast one param is required
 //
-// This will show create a new volunteer.
+// This will show hosts of an event.
+// Atleast one param is required
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -53,7 +59,7 @@ type eventHostReq struct {
 //       cookieAuth
 //
 //     Responses:
-//       200: successResponse
+//       200: eventHostResponse
 func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventHostReq
 	err := decoder.Decode(&req, r.URL.Query())
@@ -78,10 +84,6 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
 	}
-	err = common.WriteSuccess(w)
-	if err != nil {
-		helpers.LogError(err.Error())
-	}
 }
 
 // Event details
@@ -102,12 +104,18 @@ type eventAttendeeReq struct {
 	EventID string `schema:"event_id" json:"event_id"`
 }
 
+// swagger:response eventAttendeeResponse
+type eventAttendeeResponse struct {
+	// in: body
+	eventAttendee eventattendee.EventAttendeeBridge
+}
+
 // swagger:route GET /api/event/attendee event getEventAttendee
 //
 // Get attendees of event
-// Atleast one param is required
 //
-// This will show create a new volunteer.
+// This will show attendees of an event.
+// Atleast one param is required
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -122,7 +130,7 @@ type eventAttendeeReq struct {
 //		 - JWTAuth: []
 //
 //     Responses:
-//       200: successResponse
+//       200: eventAttendeeResponse
 func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventAttendeeReq
 	err := decoder.Decode(&req, r.URL.Query())
@@ -146,10 +154,6 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
-	}
-	err = common.WriteSuccess(w)
-	if err != nil {
-		helpers.LogError(err.Error())
 	}
 }
 
@@ -179,12 +183,19 @@ type eventGetReq struct {
 	Category int `schema:"category" json:"category"`
 }
 
+// swagger:response eventResponse
+type eventResponse struct {
+	// in: body
+	event event.Event
+}
+
 // swagger:route GET /api/event/get event getEvent
 //
 // Get details of event
-// Atleast one param is required
 //
-// This will show create a new volunteer.
+//
+// This will show details of event
+// Atleast one param is required
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded
@@ -199,7 +210,7 @@ type eventGetReq struct {
 //       cookieAuth
 //
 //     Responses:
-//       200: successResponse
+//       200: eventResponse
 func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req eventGetReq
 	err := decoder.Decode(&req, r.URL.Query())
@@ -222,10 +233,6 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
 		return
-	}
-	err = common.WriteSuccess(w)
-	if err != nil {
-		helpers.LogError(err.Error())
 	}
 }
 
@@ -263,7 +270,7 @@ type eventPostReq struct {
 //
 // Create a new event
 //
-// This will show create a new volunteer.
+// This will show create a new event.
 //
 //     Consumes:
 //     - application/x-www-form-urlencoded

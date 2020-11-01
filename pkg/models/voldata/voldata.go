@@ -12,6 +12,7 @@ const (
 	schema    = helpers.DbSchemaVol
 )
 
+// swagger:model
 type VolData struct {
 	VolunteerID  string `row:"volunteer_id" type:"exact" pk:"manual" json:"volunteer_id"`
 	DisplayName  string `row:"display_name" type:"like" json:"display_name"`
