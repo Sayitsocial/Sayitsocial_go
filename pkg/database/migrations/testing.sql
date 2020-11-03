@@ -21,8 +21,8 @@ INSERT INTO public.event_category(
 	VALUES (1, 'category 1');
 
 INSERT INTO public.events(
-	event_id, name, description, category, start_time, host_time)
-	VALUES (1, 'test event', 'dfsjkdfh', 1, 1600886464, 1600886464);
+	event_id, name, description, category, start_time, host_time, location)
+	VALUES (1, 'test event', 'dfsjkdfh', 1, 1600886464, 1600886464, ST_SetSRID(ST_MakePoint(73.856743, 18.520430), 4326));
 
 INSERT INTO public.event_host_bridge(
 	generated_id, event_id, volunteer_id, organisation_id)

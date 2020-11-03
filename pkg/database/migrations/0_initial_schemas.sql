@@ -1,4 +1,6 @@
 -- +migrate Up
+CREATE EXTENSION postgis;
+
 CREATE SCHEMA auth;
 CREATE SCHEMA organisation;
 CREATE SCHEMA volunteer;

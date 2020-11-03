@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 
 	"github.com/google/uuid"
 
@@ -129,6 +130,10 @@ func (e eventPostReq) PutInDB() error {
 		return errors.New("Invalid category ID")
 	}
 
+	if len(e.Location) < 2 {
+		return errors.New("Invalid location data")
+	}
+
 	eventModel := event.Initialize(tx)
 
 	eventID := uuid.New().String()
@@ -142,6 +147,10 @@ func (e eventPostReq) PutInDB() error {
 		Category: categories.EventCategory{
 			GeneratedID: e.Category,
 		},
+		Location: models.GeographyPoints{
+			Longitude: e.Location[0],
+			Latitude:  e.Location[1],
+		},
 	})
 
 	if err != nil {
@@ -152,6 +161,7 @@ func (e eventPostReq) PutInDB() error {
 	eventHostBridgeModel := eventhost.Initialize(tx)
 
 	err = eventHostBridgeModel.Create(eventhost.EventHostBridge{
+		GeneratedID: uuid.New().String(),
 		Organisation: orgdata.OrgData{
 			OrganisationID: e.OrganisationID,
 		},
@@ -172,8 +182,11 @@ func (e eventPostReq) PutInDB() error {
 
 // CastToModel converts request struct to model struct
 func (e eventGetReq) CastToModel() (event.Event, error) {
-	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 {
+	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 && len(e.Location) == 0 {
 		return event.Event{}, errors.New("Requires one parameter")
+	}
+	if len(e.Location) < 3 {
+		return event.Event{}, errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 	return event.Event{
 		EventID:   e.EventID,
@@ -182,6 +195,11 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 		StartTime: e.StartTime,
 		Category: categories.EventCategory{
 			GeneratedID: e.Category,
+		},
+		Location: models.GeographyPoints{
+			Longitude: e.Location[0],
+			Latitude:  e.Location[1],
+			Radius:    e.Location[2],
 		},
 	}, nil
 }

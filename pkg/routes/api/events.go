@@ -181,6 +181,12 @@ type eventGetReq struct {
 	// Type of category [Refer to event_category]
 	// in: query
 	Category int `schema:"category" json:"category"`
+
+	// Location in [Longitude, Latitude, Radius]
+	// in: query
+	// minItems: 3
+	// maxItems: 3
+	Location []float64 `schema:"location" json:"location"`
 }
 
 // swagger:response eventResponse
@@ -219,6 +225,8 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}
+
+	helpers.LogInfo(req)
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
@@ -264,6 +272,12 @@ type eventPostReq struct {
 	// Type of category [Refer to event_category]
 	// in: query
 	Category int `schema:"category,required" json:"category"`
+
+	// Location in [Longitude, Latitude]
+	// in: query
+	// minItems: 2
+	// maxItems: 2
+	Location []float64 `schema:"location" json:"location"`
 }
 
 // swagger:route POST /api/event/create event createEvent

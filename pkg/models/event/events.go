@@ -21,6 +21,7 @@ type Event struct {
 	Description string                   `row:"description" type:"like" json:"description"`
 	StartTime   int64                    `row:"start_time" type:"exact" json:"start_time"`
 	HostTime    int64                    `row:"host_time" type:"exact" json:"host_time"`
+	Location    models.GeographyPoints   `row:"location" type:"exact" json:"location"`
 	Category    categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id" json:"category"`
 }
 
@@ -53,7 +54,7 @@ func (a Model) Close() {
 // Create creates a value in database
 func (a Model) Create(data Event) error {
 	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
-
+	helpers.LogInfo(args)
 	var err error
 	if a.trans != nil {
 		_, err = a.trans.Exec(query, args...)
@@ -67,9 +68,6 @@ func (a Model) Create(data Event) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data Event) (event []Event) {
 	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
-	helpers.LogInfo(query)
-	helpers.LogInfo(args)
-
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
 		helpers.LogError(err.Error())

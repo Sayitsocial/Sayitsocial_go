@@ -20,6 +20,14 @@ type tmpHolder struct {
 	value  reflect.Value
 }
 
+// GeographyPoints is a struct that holds longitude, latitude of a location and optionally radius
+// Radius can be specified to initiate a search of other points in radius from specified coordinates
+type GeographyPoints struct {
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+	Radius    float64 `scan:"ignore" json:"-"`
+}
+
 func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
@@ -27,7 +35,9 @@ func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 	var ret = ""
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).Kind() == reflect.Struct {
-			if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
+			if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
+				ret += fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry), ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+			} else if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
 				ret += getAllMembers(v.Field(i).Interface(), foreignTable, false)
 			} else {
 				ret += getAllMembers(v.Field(i).Interface(), tableName, false)
@@ -50,7 +60,7 @@ func getSearchBy(inte interface{}, tableName string, appendTableName bool) (tota
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
 	for i := 0; i < v.NumField(); i++ {
-		if v.Field(i).Kind() == reflect.Struct {
+		if _, ok := v.Field(i).Interface().(GeographyPoints); !ok && v.Field(i).Kind() == reflect.Struct {
 			if appendTableName {
 				if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
 					tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), foreignTable, true)
@@ -65,14 +75,27 @@ func getSearchBy(inte interface{}, tableName string, appendTableName bool) (tota
 			}
 		}
 		if !checkEmpty(v.Field(i)) {
+			if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
+				searchBy = append(searchBy, tmpHolder{
+					name: func() string {
+						if appendTableName {
+							return fmt.Sprintf("ST_DWithin(%s.%s, ST_MakePoint(%v,%v), %v)", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), v.Field(i).FieldByName("Longitude").Interface(), v.Field(i).FieldByName("Latitude").Interface(), v.Field(i).FieldByName("Radius").Interface())
+						}
+						return fmt.Sprintf("ST_DWithin(%s, ST_MakePoint(%v,%v), %v)", t.Field(i).Tag.Get(helpers.RowStructTag), v.Field(i).FieldByName("Longitude").Interface(), v.Field(i).FieldByName("Latitude").Interface(), v.Field(i).FieldByName("Radius").Interface())
+					}(),
+					typeOf: "onlyvalue",
+					value:  reflect.ValueOf(nil),
+				})
+				continue
+			}
+
 			if val := t.Field(i).Tag.Get("type"); val != "" {
 				searchBy = append(searchBy, tmpHolder{
 					name: func() string {
 						if !appendTableName {
 							return fmt.Sprintf("%s ", t.Field(i).Tag.Get(helpers.RowStructTag))
-						} else {
-							return fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 						}
+						return fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 					}(),
 					typeOf: val,
 					value: func() reflect.Value {
@@ -102,16 +125,21 @@ func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, 
 		return nil, ""
 	}
 	query := " WHERE "
+	helpers.LogInfo(searchBy)
 	for searchByCount, r := range searchBy {
 		if r.typeOf == "exact" {
 			query += fmt.Sprintf("%v = $%d", r.name, searchByCount+1)
 		} else if r.typeOf == "like" {
 			query += fmt.Sprintf("%v ILIKE $%d", r.name, searchByCount+1)
+		} else if r.typeOf == "onlyvalue" {
+			query += fmt.Sprintf("%v", r.name)
 		}
 		if searchByCount < totalSearchByCount-1 {
 			query += " AND "
 		}
-		args = append(args, r.value.Interface())
+		if r.typeOf != "onlyvalue" {
+			args = append(args, r.value.Interface())
+		}
 	}
 	return args, query
 }
@@ -145,6 +173,10 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 	var valuesCount = 0
 	args := make([]interface{}, 0)
 
+	// pqsl driver interprets function names passed in args as string and errors out
+	// TODO: Eliminate args and put everything in query
+	geographyValues := make(map[int]bool, 0)
+
 	for i := 0; i < v.NumField(); i++ {
 		row := t.Field(i).Tag.Get(helpers.RowStructTag)
 
@@ -155,27 +187,40 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 		}
 
 		if row != "" {
+			_, isGeographyPoints := v.Field(i).Interface().(GeographyPoints)
+			if isGeographyPoints {
+				geographyValues[i] = true
+			}
+
 			if valuesCount != 0 {
 				query += ", " + row
 			} else {
 				query += row
 			}
 
-			if v.Field(i).Kind() == reflect.Struct {
-				args = append(args, getSructCreateArg(v.Field(i), t.Field(i)))
-			} else {
-				args = append(args, v.Field(i).Interface())
+			if !isGeographyPoints {
+				if v.Field(i).Kind() == reflect.Struct {
+					args = append(args, getSructCreateArg(v.Field(i), t.Field(i)))
+				} else {
+					args = append(args, v.Field(i).Interface())
+				}
 			}
 			valuesCount++
 		}
 	}
 
+	numbering := 0
 	query += ") values("
 	for i := 0; i < valuesCount; i++ {
-		if i < valuesCount-1 {
-			query += "$" + strconv.Itoa(i+1) + ", "
+		if _, ok := geographyValues[i]; ok {
+			query += fmt.Sprintf("ST_SetSRID(ST_MakePoint(%v, %v), 4326)", v.Field(i).FieldByName("Longitude").Interface(), v.Field(i).FieldByName("Latitude").Interface())
 		} else {
-			query += "$" + strconv.Itoa(i+1)
+			numbering++
+			query += "$" + strconv.Itoa(numbering)
+		}
+
+		if i < valuesCount-1 {
+			query += ", "
 		}
 	}
 
@@ -251,7 +296,7 @@ func getInnerJoin(inte interface{}, tableName string) string {
 	v := reflect.ValueOf(inte)
 	var ret string
 	for i := 0; i < v.NumField(); i++ {
-		if v.Field(i).Kind() == reflect.Struct {
+		if v.Field(i).Kind() == reflect.Struct && t.Field(i).Tag.Get("fk") != "" {
 			ret += fmt.Sprintf(" INNER JOIN %s ON (%s.%s = %s.%s) ", t.Field(i).Tag.Get("fk"), tableName, t.Field(i).Tag.Get(helpers.RowStructTag), t.Field(i).Tag.Get("fk"), t.Field(i).Tag.Get("fr"))
 			ret += getInnerJoin(v.Field(i).Interface(), fmt.Sprintf("%s", t.Field(i).Tag.Get("fk")))
 		}
@@ -283,12 +328,15 @@ func QueryBuilderCount(inte interface{}, tableName string) (string, []interface{
 	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, tableName, where), args
 }
 
-func getPtrs(dest reflect.Value) []interface{} {
+func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
 	ptrs := make([]interface{}, 0)
 	for i := 0; i < dest.NumField(); i++ {
 		dd := reflect.Indirect(dest.Field(i))
+		if typeOf.Field(i).Tag.Get("scan") == "ignore" {
+			continue
+		}
 		if dd.Kind() == reflect.Struct {
-			ptrs = append(ptrs, getPtrs(dest.Field(i))...)
+			ptrs = append(ptrs, getPtrs(dest.Field(i), typeOf.Field(i).Type)...)
 			continue
 		}
 		ptrs = append(ptrs, dest.Field(i).Addr().Interface())
@@ -318,7 +366,7 @@ func GetIntoStruct(rows *sql.Rows, dest interface{}) {
 		vp := reflect.New(base)
 		vpInd := vp.Elem()
 
-		ptrs = append(ptrs, getPtrs(vpInd)...)
+		ptrs = append(ptrs, getPtrs(vpInd, vpInd.Type())...)
 
 		err := rows.Scan(ptrs...)
 		if err != nil {

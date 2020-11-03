@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "public"."events"
  "category"    integer NOT NULL,
  "start_time"  bigint NOT NULL,
  "host_time"   bigint NOT NULL,
+ "location"    geography NOT NULL,
  CONSTRAINT "PK_events" PRIMARY KEY ( "event_id" ),
  CONSTRAINT "FK_53" FOREIGN KEY ( "category" ) REFERENCES "event_category" ( "generated_id" )
 );
@@ -16,6 +17,8 @@ CREATE INDEX "fkIdx_53" ON "public"."events"
 (
  "category"
 );
+
+CREATE INDEX tbl_geog_gist ON "public"."events" USING gist(location);
 
 -- +migrate Down
 DROP INDEX IF EXISTS "fkIdx_53";
