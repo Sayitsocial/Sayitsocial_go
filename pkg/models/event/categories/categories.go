@@ -13,8 +13,8 @@ const (
 )
 
 type EventCategory struct {
-	GeneratedID int    `row:"generated_id" type:"exact" json:"generated_id" pk:"auto"`
-	Name        string `row:"name" type:"exact" json:"name"`
+	GeneratedID int    `row:"generated_id" type:"exact" json:"generated_id,omitempty" pk:"auto"`
+	Name        string `row:"name" type:"exact" json:"name,omitempty"`
 }
 
 type Model struct {

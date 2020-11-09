@@ -147,6 +147,7 @@ func (e eventPostReq) PutInDB() error {
 		Category: categories.EventCategory{
 			GeneratedID: e.Category,
 		},
+		TypeOfEvent: e.TypeOfEvent,
 		Location: models.GeographyPoints{
 			Longitude: e.Location[0],
 			Latitude:  e.Location[1],
@@ -185,7 +186,7 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 && len(e.Location) == 0 {
 		return event.Event{}, errors.New("Requires one parameter")
 	}
-	if len(e.Location) < 3 {
+	if len(e.Location) < 3 && len(e.Location) != 0 {
 		return event.Event{}, errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 	return event.Event{
@@ -196,11 +197,18 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 		Category: categories.EventCategory{
 			GeneratedID: e.Category,
 		},
-		Location: models.GeographyPoints{
-			Longitude: e.Location[0],
-			Latitude:  e.Location[1],
-			Radius:    e.Location[2],
-		},
+		TypeOfEvent: e.TypeOfEvent,
+		Location: func() models.GeographyPoints {
+			if len(e.Location) < 3 {
+				return models.GeographyPoints{}
+			}
+			return models.GeographyPoints{
+				Longitude: e.Location[0],
+				Latitude:  e.Location[1],
+				Radius:    e.Location[2],
+			}
+		}(),
+		Short: e.Short,
 	}, nil
 }
 

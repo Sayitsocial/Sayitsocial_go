@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
@@ -34,19 +35,21 @@ func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 
 	var ret = ""
 	for i := 0; i < v.NumField(); i++ {
-		if v.Field(i).Kind() == reflect.Struct {
-			if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
-				ret += fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry), ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
-			} else if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
-				ret += getAllMembers(v.Field(i).Interface(), foreignTable, false)
+		if t.Field(i).Tag.Get("type") != "sort" && t.Field(i).Tag.Get(helpers.RowStructTag) != "" {
+			if v.Field(i).Kind() == reflect.Struct {
+				if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
+					ret += fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry), ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+				} else if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
+					ret += getAllMembers(v.Field(i).Interface(), foreignTable, false)
+				} else {
+					ret += getAllMembers(v.Field(i).Interface(), tableName, false)
+				}
+				continue
 			} else {
-				ret += getAllMembers(v.Field(i).Interface(), tableName, false)
+				ret += fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 			}
-			continue
-		} else {
-			ret += fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+			ret += ","
 		}
-		ret += ","
 	}
 	return func() string {
 		if isOuter {
@@ -125,32 +128,49 @@ func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, 
 		return nil, ""
 	}
 	query := " WHERE "
-	helpers.LogInfo(searchBy)
 	for searchByCount, r := range searchBy {
-		if r.typeOf == "exact" {
-			query += fmt.Sprintf("%v = $%d", r.name, searchByCount+1)
-		} else if r.typeOf == "like" {
-			query += fmt.Sprintf("%v ILIKE $%d", r.name, searchByCount+1)
-		} else if r.typeOf == "onlyvalue" {
-			query += fmt.Sprintf("%v", r.name)
-		}
-		if searchByCount < totalSearchByCount-1 {
-			query += " AND "
-		}
-		if r.typeOf != "onlyvalue" {
-			args = append(args, r.value.Interface())
+		if r.name != "" && r.name != " " {
+			if r.typeOf != "sort" {
+				if r.typeOf == "exact" {
+					query += fmt.Sprintf("%v = $%d", r.name, searchByCount+1)
+				} else if r.typeOf == "like" {
+					query += fmt.Sprintf("%v ILIKE $%d", r.name, searchByCount+1)
+				} else if r.typeOf == "onlyvalue" {
+					query += fmt.Sprintf("%v", r.name)
+				}
+				if searchByCount < totalSearchByCount-1 {
+					query += " AND "
+				}
+				if r.typeOf != "onlyvalue" {
+					args = append(args, r.value.Interface())
+				}
+			}
 		}
 	}
-	return args, query
+	return args, strings.TrimSuffix(query, "AND ")
+}
+
+func getOrderBy(searchBy []tmpHolder) (orderArgs []string) {
+	for _, item := range searchBy {
+		if item.typeOf == "sort" {
+			return item.value.Interface().([]string)
+		}
+	}
+	return nil
 }
 
 // QueryBuilderGet generates normal get queries for non nested structures
 func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 	query := `SELECT ` + getAllMembers(i, tableName, true)
 
-	args, where := getArgsWhere(getSearchBy(i, tableName, true))
+	tmpCount, tmpHolder := getSearchBy(i, tableName, true)
+	args, where := getArgsWhere(tmpCount, tmpHolder)
 	query += " FROM " + tableName
 	query += where
+	sorts := getOrderBy(tmpHolder)
+	if sorts != nil && len(sorts) == 2 {
+		query += fmt.Sprintf(" ORDER BY %s, %s", sorts[0], sorts[1])
+	}
 
 	return query, args
 }
@@ -306,8 +326,16 @@ func getInnerJoin(inte interface{}, tableName string) string {
 
 // QueryBuilderJoin generates get queries for nested structures with inner join support
 func QueryBuilderJoin(inte interface{}, tableName string) (string, []interface{}) {
-	args, where := getArgsWhere(getSearchBy(inte, tableName, true))
-	query := fmt.Sprintf("SELECT %s FROM %s %s %s", getAllMembers(inte, tableName, true), tableName, getInnerJoin(inte, tableName), where)
+	tmpCount, tmpHolder := getSearchBy(inte, tableName, true)
+
+	sorts := getOrderBy(tmpHolder)
+	args, where := getArgsWhere(tmpCount, tmpHolder)
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(inte, tableName, true), tableName, getInnerJoin(inte, tableName), where, func() string {
+		if sorts != nil && len(sorts) == 2 {
+			return fmt.Sprintf(" ORDER BY %s %s", sorts[0], sorts[1])
+		}
+		return ""
+	}())
 	return query, args
 }
 

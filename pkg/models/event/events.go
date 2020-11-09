@@ -2,6 +2,7 @@ package event
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/categories"
 
@@ -16,13 +17,37 @@ const (
 
 // swagger:model
 type Event struct {
-	EventID     string                   `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
-	Name        string                   `row:"name" type:"like" json:"name"`
-	Description string                   `row:"description" type:"like" json:"description"`
-	StartTime   int64                    `row:"start_time" type:"exact" json:"start_time"`
-	HostTime    int64                    `row:"host_time" type:"exact" json:"host_time"`
-	Location    models.GeographyPoints   `row:"location" type:"exact" json:"location"`
-	Category    categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id" json:"category"`
+	EventID       string                   `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
+	Name          string                   `row:"name" type:"like" json:"name"`
+	Description   string                   `row:"description" type:"like" json:"description,omitempty"`
+	StartTime     int64                    `row:"start_time" type:"exact" json:"start_time,omitempty"`
+	HostTime      int64                    `row:"host_time" type:"exact" json:"host_time,omitempty"`
+	Location      models.GeographyPoints   `row:"location" type:"exact" json:"location"`
+	TypeOfEvent   int64                    `row:"type_of_event" type:"exact" json:"type_of_event"`
+	Category      categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id" json:"-"`
+	TrendingIndex int64                    `row:"trending_index" type:"exact" json:"trending_index"`
+	SortBy        []string                 `type:"sort" scan:"ignore" json:"-"`
+	Short         bool                     `scan:"ignore" json:"-"`
+}
+
+func (e *Event) MarshalJSON() ([]byte, error) {
+	type tmp Event
+	cat := &e.Category
+	if e.Short {
+		helpers.LogInfo("here")
+		e.Description = ""
+		e.StartTime = 0
+		e.HostTime = 0
+		cat = nil
+
+	}
+	return json.Marshal(&struct {
+		*tmp
+		*categories.EventCategory `json:"category,omitempty"`
+	}{
+		(*tmp)(e),
+		cat,
+	})
 }
 
 type Model struct {
@@ -68,6 +93,7 @@ func (a Model) Create(data Event) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data Event) (event []Event) {
 	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
+	helpers.LogInfo(query)
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
 		helpers.LogError(err.Error())
@@ -75,6 +101,12 @@ func (a Model) Get(data Event) (event []Event) {
 	}
 
 	models.GetIntoStruct(row, &event)
+	if data.Short {
+		for i := range event {
+			event[i].Short = true
+		}
+	}
+	helpers.LogInfo(event[0].Short)
 	return
 }
 

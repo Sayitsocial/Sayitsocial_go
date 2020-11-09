@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
@@ -182,17 +183,46 @@ type eventGetReq struct {
 	// in: query
 	Category int `schema:"category" json:"category"`
 
+	// Type of event [0 - Virtual, 1 - Physical]
+	// in: query
+	TypeOfEvent int64 `schema:"type_of_event" json:"type_of_event"`
+
 	// Location in [Longitude, Latitude, Radius]
 	// in: query
 	// minItems: 3
 	// maxItems: 3
 	Location []float64 `schema:"location" json:"location"`
+
+	// Sort results by [trending/ST_XMin(location), ASC/DESC/empty]
+	// in: query
+	SortBy string `schema:"sortby" json:"sortby"`
+
+	// Get short results
+	// in: query
+	Short bool `schema:"short" json:"short"`
+}
+
+// swagger:model
+type eventShort struct {
+	EventID       string                 `json:"event_id"`
+	Name          string                 `json:"name"`
+	Location      models.GeographyPoints `json:"location"`
+	TypeOfEvent   int64                  `json:"type_of_event"`
+	TrendingIndex int64                  `json:"trending_index"`
 }
 
 // swagger:response eventResponse
 type eventResponse struct {
 	// in: body
 	event event.Event
+}
+
+// This response will be returned if "short" is true
+// Status code will be 200
+// swagger:response eventShortResponse
+type eventShortResponse struct {
+	// in: body
+	event eventShort
 }
 
 // swagger:route GET /api/event/get event getEvent
@@ -216,7 +246,8 @@ type eventResponse struct {
 //       cookieAuth
 //
 //     Responses:
-//       200: eventResponse
+//       - 200: eventResponse
+//		 - 201: eventShortResponse
 func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req eventGetReq
 	err := decoder.Decode(&req, r.URL.Query())
@@ -272,6 +303,10 @@ type eventPostReq struct {
 	// Type of category [Refer to event_category]
 	// in: query
 	Category int `schema:"category,required" json:"category"`
+
+	// Type of category [0 - Virtual, 1 - Physical]
+	// in: query
+	TypeOfEvent int64 `schema:"type_of_event,required" json:"type_of_event"`
 
 	// Location in [Longitude, Latitude]
 	// in: query

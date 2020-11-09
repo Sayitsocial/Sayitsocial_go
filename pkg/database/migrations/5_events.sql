@@ -6,9 +6,11 @@ CREATE TABLE IF NOT EXISTS "public"."events"
  "name"        varchar(50) NOT NULL,
  "description" varchar(50) NOT NULL,
  "category"    integer NOT NULL,
+ "type_of_event" integer NOT NULL,
  "start_time"  bigint NOT NULL,
  "host_time"   bigint NOT NULL,
  "location"    geography NOT NULL,
+ "trending_index" smallint NULL DEFAULT 0,
  CONSTRAINT "PK_events" PRIMARY KEY ( "event_id" ),
  CONSTRAINT "FK_53" FOREIGN KEY ( "category" ) REFERENCES "event_category" ( "generated_id" )
 );
