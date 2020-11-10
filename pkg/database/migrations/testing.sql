@@ -13,8 +13,8 @@ INSERT INTO volunteer.volunteer(
 	VALUES (3, 'gfxvcxvxfg', 'flkgdf', '37489', 'fgkdshgfksdhf', 1600886464 );
 
 INSERT INTO organisation.organisation(
-	organisation_id, display_name, locality, registration_no, contact_email, contact_phone, description, achievements, owner, type_of_org)
-	VALUES (1, 'sfdf', 'fjdkf', 'dfjhj', 'hfjksd', 'sfdf', 'fjdkf', 'dfjhj', 1, 0);
+	organisation_id, display_name, locality, registration_no, contact_email, contact_phone, description, achievements, owner, type_of_org, location)
+	VALUES (1, 'sfdf', 'fjdkf', 'dfjhj', 'hfjksd', 'sfdf', 'fjdkf', 'dfjhj', 1, 0, ST_SetSRID(ST_MakePoint(69.856743, 42.020430), 4326));
 
 INSERT INTO public.event_category(
 	generated_id, name)

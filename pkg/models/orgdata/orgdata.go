@@ -2,6 +2,7 @@ package orgdata
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
@@ -14,21 +15,43 @@ const (
 
 // swagger:model
 type OrgData struct {
-	OrganisationID string `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
-	DisplayName    string `row:"display_name" type:"like" json:"display_name"`
-	Locality       string `row:"locality" type:"like" json:"locality"`
-	RegistrationNo string `row:"registration_no" type:"exact" json:"registration_no"`
-	ContactEmail   string `row:"contact_email" type:"like" json:"contact_email"`
-	ContactPhone   string `row:"contact_phone" type:"like" json:"contact_phone"`
-	Desc           string `row:"description" type:"like" json:"desc"`
-	Owner          string `row:"owner" type:"like" json:"owner"`
-	Achievements   string `row:"achievements" type:"like" json:"achievements"`
-	TypeOfOrg      int    `row:"type_of_org" type:"like" json:"type_of_org"`
+	OrganisationID string                 `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
+	DisplayName    string                 `row:"display_name" type:"like" json:"display_name"`
+	Locality       string                 `row:"locality" type:"like" json:"locality,omitempty"`
+	RegistrationNo string                 `row:"registration_no" type:"exact" json:"registration_no,omitempty"`
+	ContactEmail   string                 `row:"contact_email" type:"like" json:"contact_email,omitempty"`
+	ContactPhone   string                 `row:"contact_phone" type:"like" json:"contact_phone"`
+	Desc           string                 `row:"description" type:"like" json:"desc,omitempty"`
+	Owner          string                 `row:"owner" type:"like" json:"owner,omitempty"`
+	Achievements   string                 `row:"achievements" type:"like" json:"achievements,omitempty"`
+	TypeOfOrg      int                    `row:"type_of_org" type:"like" json:"type_of_org"`
+	Location       models.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
+	Short          bool                   `scan:"ignore" json:"-"`
 }
 
 type Model struct {
 	trans *sql.Tx
 	conn  *sql.DB
+}
+
+func (o *OrgData) MarshalJSON() ([]byte, error) {
+	type tmp OrgData
+	//cat := &e.Category
+	helpers.LogInfo(o.Short)
+	if o.Short {
+		o.RegistrationNo = ""
+		o.ContactEmail = ""
+		o.ContactPhone = ""
+		o.Desc = ""
+		o.Owner = ""
+		o.Achievements = ""
+		o.Locality = ""
+	}
+	return json.Marshal(&struct {
+		*tmp
+	}{
+		(*tmp)(o),
+	})
 }
 
 // Initialize returns model of db with active connection
@@ -69,13 +92,17 @@ func (a Model) Create(data OrgData) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data OrgData) (orgData []OrgData) {
 	query, args := models.QueryBuilderGet(data, schema+"."+tableName)
-
+	helpers.LogInfo(query)
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
 		helpers.LogError(err.Error())
 		return
 	}
-
 	models.GetIntoStruct(row, &orgData)
+	if data.Short {
+		for i := range orgData {
+			orgData[i].Short = true
+		}
+	}
 	return
 }

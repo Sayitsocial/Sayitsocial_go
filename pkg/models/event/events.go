@@ -22,7 +22,7 @@ type Event struct {
 	Description   string                   `row:"description" type:"like" json:"description,omitempty"`
 	StartTime     int64                    `row:"start_time" type:"exact" json:"start_time,omitempty"`
 	HostTime      int64                    `row:"host_time" type:"exact" json:"host_time,omitempty"`
-	Location      models.GeographyPoints   `row:"location" type:"exact" json:"location"`
+	Location      models.GeographyPoints   `row:"location" type:"onlyvalue" json:"location"`
 	TypeOfEvent   int64                    `row:"type_of_event" type:"exact" json:"type_of_event"`
 	Category      categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id" json:"-"`
 	TrendingIndex int64                    `row:"trending_index" type:"exact" json:"trending_index"`
@@ -34,7 +34,6 @@ func (e *Event) MarshalJSON() ([]byte, error) {
 	type tmp Event
 	cat := &e.Category
 	if e.Short {
-		helpers.LogInfo("here")
 		e.Description = ""
 		e.StartTime = 0
 		e.HostTime = 0

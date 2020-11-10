@@ -101,6 +101,10 @@ func (o orgCreReq) PutInDB() error {
 		ContactEmail:   o.Email,
 		Owner:          o.Owner,
 		TypeOfOrg:      int(o.TypeOfOrg),
+		Location: models.GeographyPoints{
+			Longitude: o.Location[0],
+			Latitude:  o.Location[1],
+		},
 	})
 	if err != nil {
 		tx.Rollback()
@@ -254,6 +258,17 @@ func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
 		DisplayName:    e.DisplayName,
 		Owner:          e.Owner,
 		TypeOfOrg:      e.TypeOfOrg,
+		Location: func() models.GeographyPoints {
+			if len(e.Location) < 3 {
+				return models.GeographyPoints{}
+			}
+			return models.GeographyPoints{
+				Longitude: e.Location[0],
+				Latitude:  e.Location[1],
+				Radius:    e.Location[2],
+			}
+		}(),
+		Short: e.Short,
 	}, nil
 }
 

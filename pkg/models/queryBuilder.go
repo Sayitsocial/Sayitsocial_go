@@ -38,7 +38,7 @@ func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 		if t.Field(i).Tag.Get("type") != "sort" && t.Field(i).Tag.Get(helpers.RowStructTag) != "" {
 			if v.Field(i).Kind() == reflect.Struct {
 				if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
-					ret += fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry), ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+					ret += fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry),", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 				} else if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
 					ret += getAllMembers(v.Field(i).Interface(), foreignTable, false)
 				} else {
@@ -46,14 +46,14 @@ func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
 				}
 				continue
 			} else {
-				ret += fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+				ret += fmt.Sprintf("%s.%s", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 			}
 			ret += ","
 		}
 	}
 	return func() string {
 		if isOuter {
-			return ret[:len(ret)-1]
+			return strings.TrimSuffix(ret, ",")
 		}
 		return ret
 	}()

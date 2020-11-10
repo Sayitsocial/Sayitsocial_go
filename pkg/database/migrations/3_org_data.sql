@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS "organisation"."organisation"
  "achievements"    varchar(50) NOT NULL,
  "owner"           varchar(36) NOT NULL,
  "type_of_org"     integer NOT NULL,
+ "location"    geography NOT NULL,
+
  CONSTRAINT "PK_organisation" PRIMARY KEY ( "organisation_id" ),
  CONSTRAINT "FK_26" FOREIGN KEY ( "owner" ) REFERENCES "volunteer"."volunteer" ( "volunteer_id" )
 );
@@ -19,6 +21,8 @@ CREATE INDEX "fkIdx_26" ON "organisation"."organisation"
 (
  "owner"
 );
+
+CREATE INDEX tbl_geog_gist1 ON "organisation"."organisation" USING gist(location);
 
 -- +migrate Down
 DROP INDEX IF EXISTS "fkIdx_26";
