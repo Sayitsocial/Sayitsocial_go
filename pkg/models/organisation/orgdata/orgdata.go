@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	tableName = helpers.DbTableOrganisationData
+	tableName = "organisation"
 	schema    = helpers.DbSchemaOrg
 )
 

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
@@ -13,7 +13,7 @@ import (
 
 const (
 	tableName = "event_host_bridge"
-	schema    = "public"
+	schema    = helpers.DbSchemaEvents
 )
 
 // swagger:model
@@ -21,7 +21,7 @@ type EventHostBridge struct {
 	GeneratedID  string          `row:"generated_id" type:"exact" pk:"manual" json:"generated_id"`
 	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation" fk:"organisation.organisation" fr:"organisation_id"`
 	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer" fk:"volunteer.volunteer" fr:"volunteer_id"`
-	Event        event.Event     `row:"event_id" type:"exact" json:"event" fk:"public.events" fr:"event_id"`
+	Event        event.Event     `row:"event_id" type:"exact" json:"event" fk:"events.events" fr:"event_id"`
 }
 
 type Model struct {

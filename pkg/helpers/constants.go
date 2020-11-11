@@ -44,12 +44,8 @@ const (
 	DbSchemaAuth   = "auth"
 	DbSchemaOrg    = "organisation"
 	DbSchemaVol    = "volunteer"
-	DbSchemaBridge = "bridge"
-
-	DbTableAuth             = "auth"
-	DbTableOrganisationData = "organisation"
-	DbTableVolunteerData    = "volunteer"
-	DbTableVolOrgBridge     = "volorg"
+	DbSchemaEvents = "events"
+	DbSchemaPublic = "public"
 )
 
 func initPaths() {

@@ -9,7 +9,7 @@ import (
 
 const (
 	tableName = "event_category"
-	schema    = "public"
+	schema    = helpers.DbSchemaEvents
 )
 
 type EventCategory struct {

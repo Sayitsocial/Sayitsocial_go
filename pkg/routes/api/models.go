@@ -17,8 +17,8 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/categories"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 )
 
 // OrgType is type of organisation

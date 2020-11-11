@@ -6,7 +6,7 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	tableName = helpers.DbTableAuth
+	tableName = "auth"
 	schema    = helpers.DbSchemaAuth
 )
 

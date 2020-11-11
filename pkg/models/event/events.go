@@ -12,7 +12,7 @@ import (
 
 const (
 	tableName = "events"
-	schema    = "public"
+	schema    = helpers.DbSchemaEvents
 )
 
 // swagger:model
@@ -24,7 +24,7 @@ type Event struct {
 	HostTime      int64                    `row:"host_time" type:"exact" json:"host_time,omitempty"`
 	Location      models.GeographyPoints   `row:"location" type:"onlyvalue" json:"location"`
 	TypeOfEvent   int64                    `row:"type_of_event" type:"exact" json:"type_of_event"`
-	Category      categories.EventCategory `row:"category" type:"exact" fk:"public.event_category" fr:"generated_id" json:"-"`
+	Category      categories.EventCategory `row:"category" type:"exact" fk:"events.event_category" fr:"generated_id" json:"-"`
 	TrendingIndex int64                    `row:"trending_index" type:"exact" json:"trending_index"`
 	SortBy        []string                 `type:"sort" scan:"ignore" json:"-"`
 	Short         bool                     `scan:"ignore" json:"-"`

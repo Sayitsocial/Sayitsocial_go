@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	tableName = helpers.DbTableVolunteerData
+	tableName = "volunteer"
 	schema    = helpers.DbSchemaVol
 )
 

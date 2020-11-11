@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/orgdata"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/voldata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
