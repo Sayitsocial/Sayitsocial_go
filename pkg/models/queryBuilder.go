@@ -169,7 +169,7 @@ func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 	query += where
 	sorts := getOrderBy(tmpHolder)
 	if sorts != nil && len(sorts) == 2 {
-		query += fmt.Sprintf(" ORDER BY %s, %s", sorts[0], sorts[1])
+		query += fmt.Sprintf(" ORDER BY %s %s", sorts[0], sorts[1])
 	}
 
 	return query, args

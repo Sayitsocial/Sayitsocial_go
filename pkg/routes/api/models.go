@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
@@ -208,6 +209,7 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 	if len(e.Location) < 3 && len(e.Location) != 0 {
 		return event.Event{}, errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
+
 	return event.Event{
 		EventID:   e.EventID,
 		Name:      e.Name,
@@ -228,6 +230,13 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 			}
 		}(),
 		Short: e.Short,
+		// BUG: Gorilla decoder cant parse arrays properly sometimes
+		SortBy: func() []string {
+			if len(e.SortBy) == 1 {
+				return strings.Split(e.SortBy[0], ",")
+			}
+			return e.SortBy
+		}(),
 	}, nil
 }
 
@@ -284,6 +293,13 @@ func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
 			}
 		}(),
 		Short: e.Short,
+				// BUG: Gorilla decoder cant parse arrays properly sometimes
+		SortBy: func() []string {
+			if len(e.SortBy) == 1 {
+				return strings.Split(e.SortBy[0], ",")
+			}
+			return e.SortBy
+		}(),
 	}, nil
 }
 

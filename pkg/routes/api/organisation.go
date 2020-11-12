@@ -124,6 +124,10 @@ type orgGetReq struct {
 	// maxItems: 3
 	Location []float64 `schema:"location" json:"location"`
 
+	// Sort results by [followers, ASC/DESC]
+	// in: query
+	SortBy []string `schema:"sortby" json:"sortby"`
+
 	// Get short results
 	// in: query
 	Short bool `schema:"short" json:"short"`

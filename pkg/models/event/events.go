@@ -92,7 +92,7 @@ func (a Model) Create(data Event) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data Event) (event []Event) {
 	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
-	helpers.LogInfo(query)
+	helpers.LogInfo(len(data.SortBy))
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
 		helpers.LogError(err.Error())
@@ -105,7 +105,6 @@ func (a Model) Get(data Event) (event []Event) {
 			event[i].Short = true
 		}
 	}
-	helpers.LogInfo(event[0].Short)
 	return
 }
 

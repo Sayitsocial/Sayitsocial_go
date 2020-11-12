@@ -193,9 +193,9 @@ type eventGetReq struct {
 	// maxItems: 3
 	Location []float64 `schema:"location" json:"location"`
 
-	// Sort results by [trending/ST_XMin(location), ASC/DESC/empty]
+	// Sort results by [trending_index/ST_XMin(location), ASC/DESC/empty]
 	// in: query
-	SortBy string `schema:"sortby" json:"sortby"`
+	SortBy []string `schema:"sortby" json:"sortby"`
 
 	// Get short results
 	// in: query
@@ -257,7 +257,6 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.LogInfo(req)
 	data, err := req.CastToModel()
 	if err != nil {
 		helpers.LogError(err.Error())
