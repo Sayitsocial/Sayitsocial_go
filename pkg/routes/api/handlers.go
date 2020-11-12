@@ -29,4 +29,7 @@ func (a API) Register(r *mux.Router) {
 	apiRouter.HandleFunc("/event/get", eventGetHandler).Methods("GET")
 	apiRouter.HandleFunc("/event/host", eventHostBridge).Methods("GET")
 	apiRouter.HandleFunc("/event/attendee", eventAttendeeBridge).Methods("GET")
+
+	apiRouter.HandleFunc("/followers/add", addFollowerHandler).Methods("POST")
+	apiRouter.HandleFunc("/followers/remove", removeFollowerHandler).Methods("POST")
 }

@@ -135,6 +135,7 @@ type orgDataShort struct {
 	DisplayName    string                 `json:"display_name"`
 	TypeOfOrg      int                    `json:"type_of_org"`
 	Location       models.GeographyPoints `json:"location"`
+	Followers      uint64                 `json:"follower_count"`
 }
 
 // swagger:response orgResponse

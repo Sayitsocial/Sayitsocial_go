@@ -16,34 +16,34 @@ INSERT INTO organisation.organisation(
 	organisation_id, display_name, locality, registration_no, contact_email, contact_phone, description, achievements, owner, type_of_org, location)
 	VALUES (1, 'sfdf', 'fjdkf', 'dfjhj', 'hfjksd', 'sfdf', 'fjdkf', 'dfjhj', 1, 0, ST_SetSRID(ST_MakePoint(69.856743, 42.020430), 4326));
 
-INSERT INTO public.event_category(
+INSERT INTO events.event_category(
 	generated_id, name)
 	VALUES (1, 'category 1');
 
-INSERT INTO public.events(
+INSERT INTO events.events(
 	event_id, name, description, category, start_time, host_time, location, type_of_event)
 	VALUES (1, 'test event', 'dfsjkdfh', 1, 1600886464, 1600886464, ST_SetSRID(ST_MakePoint(73.856743, 18.520430), 4326), 0);
 
-INSERT INTO public.event_host_bridge(
+INSERT INTO events.event_host_bridge(
 	generated_id, event_id, volunteer_id, organisation_id)
 	VALUES (0, 1, 1, 1);
 
-INSERT INTO public.event_host_bridge(
+INSERT INTO events.event_host_bridge(
 	generated_id, event_id, volunteer_id, organisation_id)
 	VALUES (1, 1, 2, 1);
 
-INSERT INTO public.event_host_bridge(
+INSERT INTO events.event_host_bridge(
 	generated_id, event_id, volunteer_id, organisation_id)
 	VALUES (2, 1, 3, 1);
 
-INSERT INTO public.event_attendee_bridge(
+INSERT INTO events.event_attendee_bridge(
 	generated_id, volunteer_id, event_id)
 	VALUES (1, 1, 1);
 
-INSERT INTO public.event_attendee_bridge(
+INSERT INTO events.event_attendee_bridge(
 	generated_id, volunteer_id, event_id)
 	VALUES (2, 2, 1);
 
-INSERT INTO public.event_attendee_bridge(
+INSERT INTO events.event_attendee_bridge(
 	generated_id, volunteer_id, event_id)
 	VALUES (3, 3, 1);

@@ -251,24 +251,36 @@ func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{})
 
 // QueryBuilderDelete generates normal delete queries for non nested structures
 func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
-	t := reflect.TypeOf(i)
-	v := reflect.ValueOf(i)
-	query := "DELETE FROM " + tableName + " WHERE "
+	// t := reflect.TypeOf(i)
+	// v := reflect.ValueOf(i)
+	//query := "DELETE FROM " + tableName + " WHERE "
+	args, q := getArgsWhere(getSearchBy(i, tableName, false))
+	query := fmt.Sprintf("DELETE FROM %s %s", tableName, q)
 
-	args := make([]interface{}, 0)
+	// args := make([]interface{}, 0)
 
-	for i := 0; i < v.NumField(); i++ {
+	// for i := 0; i < v.NumField(); i++ {
+	// 	var value interface{} = nil
+	// 	if v.Field(i).Kind() == reflect.Struct {
+	// 		for j := 0; j < v.Field(i).NumField(); j++ {
+	// 			if ok, _ := isPK(v.Field(i).Type().Field(i)); ok {
+	// 				value = v.Field(i).Field(i).Interface()
+	// 			}
+	// 		}
+	// 	}
 
-		if !checkEmpty(v.Field(i)) {
-			row := t.Field(i).Tag.Get(helpers.RowStructTag)
-			if row != "" {
-				query += row + " = $1"
-				args = append(args, v.Field(i).Interface())
-				return query, args
-			}
-		}
-	}
-	return "", nil
+	// 	if !checkEmpty(v.Field(i)) {
+	// 		if v.Field(i).Kind() != reflect.Struct || value != nil {
+	// 			row := t.Field(i).Tag.Get(helpers.RowStructTag)
+	// 			if row != "" {
+	// 				query += row + " = $1"
+	// 				args = append(args, v.Field(i).Interface())
+	// 				return query, args
+	// 			}
+	// 		}
+	// 	}
+	// }
+	return query, args
 }
 
 // QueryBuilderUpdate generates normal update queries for non nested structures

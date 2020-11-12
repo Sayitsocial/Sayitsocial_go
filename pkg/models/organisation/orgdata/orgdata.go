@@ -13,6 +13,7 @@ const (
 	schema    = helpers.DbSchemaOrg
 )
 
+// OrgData is a model to store data about an organisation
 // swagger:model
 type OrgData struct {
 	OrganisationID string                 `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
@@ -25,15 +26,18 @@ type OrgData struct {
 	Owner          string                 `row:"owner" type:"like" json:"owner,omitempty"`
 	Achievements   string                 `row:"achievements" type:"like" json:"achievements,omitempty"`
 	TypeOfOrg      int                    `row:"type_of_org" type:"like" json:"type_of_org"`
+	Followers      uint64                 `row:"followers" type:"exact" json:"follower_count"`
 	Location       models.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
 	Short          bool                   `scan:"ignore" json:"-"`
 }
 
+// Model to hold connection details
 type Model struct {
 	trans *sql.Tx
 	conn  *sql.DB
 }
 
+// MarshalJSON is responsible for custom marshaling struct to json
 func (o *OrgData) MarshalJSON() ([]byte, error) {
 	type tmp OrgData
 	//cat := &e.Category

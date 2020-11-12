@@ -17,6 +17,7 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/categories"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/followerbridge"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 )
@@ -66,6 +67,20 @@ func (u volCreReq) PutInDB() error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func (f followerCreReq) PutInDB() error {
+	model := followerbridge.Initialize(nil)
+	defer model.Close()
+	uid := uuid.New().String()
+	err := model.Create(followerbridge.Followers{
+		GeneratedID:    uid,
+		OrganisationID: f.OrganisationID,
+		Volunteer: voldata.VolData{
+			VolunteerID: f.VolunteerID,
+		},
+	})
+	return err
 }
 
 func (o orgCreReq) PutInDB() error {
@@ -278,4 +293,20 @@ func (e volGetReq) CastToModel() (voldata.VolData, error) {
 		VolunteerID: e.VolunteerID,
 		DisplayName: e.DisplayName,
 	}, nil
+}
+
+func (f followerDelReq) RemoveFromDB() error {
+	if f.OrganisationID == "" || f.VolunteerID == "" {
+		return errors.New("All parameters are required")
+	}
+
+	model := followerbridge.Initialize(nil)
+	defer model.Close()
+
+	return model.Delete(followerbridge.Followers{
+		OrganisationID: f.OrganisationID,
+		Volunteer: voldata.VolData{
+			VolunteerID: f.VolunteerID,
+		},
+	})
 }
