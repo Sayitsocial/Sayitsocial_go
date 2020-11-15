@@ -8,3 +8,4 @@ config*
 *.env
 *.out
 __debug_bin
+/web/dist

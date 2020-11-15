@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"os/exec"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
@@ -21,11 +22,19 @@ func Init() error {
 
 	err = database.RunMigrations()
 	if err != nil {
+		helpers.LogError(err.Error())
+		return err
+	}
+
+	err = buildReactApp()
+	if err != nil {
+		helpers.LogError(err.Error())
 		return err
 	}
 
 	err = initWebApp()
 	if err != nil {
+		helpers.LogError(err.Error())
 		return err
 	}
 	return nil
@@ -41,6 +50,16 @@ func initHelpers() error {
 		return err
 	}
 	helpers.LoggerInit()
+	return nil
+}
+
+func buildReactApp() error {
+	cmd := exec.Command("/usr/bin/python3", "scripts/build_react.py")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	helpers.LogInfo(string(out))
 	return nil
 }
 

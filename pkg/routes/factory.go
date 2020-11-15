@@ -32,8 +32,4 @@ func RegisterFileServer(r *mux.Router) {
 	r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/",
 		http.FileServer(http.Dir(helpers.SwaggerPath)),
 	))
-
-	r.PathPrefix("/").Handler(http.StripPrefix("/",
-		http.FileServer(http.Dir(helpers.StaticPath)),
-	))
 }
