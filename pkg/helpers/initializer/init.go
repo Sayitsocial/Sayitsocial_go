@@ -26,11 +26,11 @@ func Init() error {
 		return err
 	}
 
-	err = buildReactApp()
-	if err != nil {
-		helpers.LogError(err.Error())
-		return err
-	}
+	// err = buildReactApp()
+	// if err != nil {
+	// 	helpers.LogError(err.Error())
+	// 	return err
+	// }
 
 	err = initWebApp()
 	if err != nil {
