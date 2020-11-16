@@ -9,3 +9,4 @@ config*
 *.out
 __debug_bin
 /web/dist
+id_rsa

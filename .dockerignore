@@ -1,0 +1,24 @@
+**/*.sh
+**/*.yaml
+**/*.db
+**/*.log
+**/*.vscode
+**/*.history
+**/*.out
+**/*__debug_bin
+**/web/dist
+**/*.identifier
+**/id_rsa
+
+**/node_modules
+*.pnp
+*.pnp.js
+
+# testing
+**/coverage
+
+# production
+
+# misc
+**/*.DS_Store
+**/*package-lock.json*
