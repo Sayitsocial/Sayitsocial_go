@@ -27,7 +27,6 @@ func (s Sayitsocial) Register(r *mux.Router) {
 
 func reactAppHandler(w http.ResponseWriter, r *http.Request) {
 	ext := path.Ext(r.URL.Path)
-	helpers.LogInfo("here")
 	if ext == ".html" || ext == "" {
 		helpers.LogInfo("Serving index")
 		http.ServeFile(w, r, filepath.Join(helpers.StaticPath2, "index.html"))

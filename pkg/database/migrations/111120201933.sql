@@ -1,2 +1,2 @@
 -- +migrate Up
-CREATE EXTENSION postgis;
+-- CREATE EXTENSION postgis;

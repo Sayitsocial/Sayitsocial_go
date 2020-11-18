@@ -3,6 +3,7 @@ package authentication
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -35,7 +36,7 @@ func (a Authentication) Register(r *mux.Router) {
 
 	authRouter.StrictSlash(false)
 
-	authRouter.HandleFunc("/login", loginHandler).Methods("POST")
+	authRouter.HandleFunc("/login", loginHandler).Methods("POST", "GET")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
 	authRouter.HandleFunc("/jwt-login", jwtLoginHandler).Methods("GET")
 	authRouter.HandleFunc("/jwt-refresh", jwtRefreshHandler).Methods("GET")
@@ -70,14 +71,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := SessionsStore.Get(r, helpers.SessionsKey)
 
-	err := r.ParseForm()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		helpers.LogError(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var creds LoginReq
-	err = decoder.Decode(&creds, r.URL.Query())
+	json.Unmarshal(body, &creds)
+	helpers.LogInfo(creds)
 	if err != nil {
 		helpers.LogError(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

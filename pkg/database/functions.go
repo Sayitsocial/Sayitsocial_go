@@ -14,6 +14,7 @@ import (
 func GetConn() *sql.DB {
 
 	conn, err := sql.Open("postgres", helpers.PgConnString)
+	helpers.LogInfo(helpers.PgConnString)
 
 	if err != nil {
 		helpers.LogError(err.Error())

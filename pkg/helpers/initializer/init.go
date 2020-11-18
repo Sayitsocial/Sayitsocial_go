@@ -4,7 +4,6 @@ import (
 	"flag"
 	"net/http"
 	"os"
-	"os/exec"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
@@ -53,16 +52,6 @@ func initHelpers() error {
 	return nil
 }
 
-func buildReactApp() error {
-	cmd := exec.Command("/usr/bin/python3", "scripts/build_react.py")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	helpers.LogInfo(string(out))
-	return nil
-}
-
 func initWebApp() error {
 	addr := flag.String("addr", "0.0.0.0:8000", "Address of server [default :8000]")
 	flag.Parse()
@@ -70,13 +59,14 @@ func initWebApp() error {
 	router := mux.NewRouter()
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 
-	routes.RegisterApps(router)
 	routes.RegisterFileServer(router)
+	routes.RegisterApps(router)
 
 	helpers.LogInfo("Server starting at " + *addr)
 
 	err := http.ListenAndServe(*addr, loggedRouter)
 	if err != nil {
+		helpers.LogError(err)
 		return err
 	}
 

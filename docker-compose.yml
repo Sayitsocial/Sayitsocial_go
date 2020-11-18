@@ -1,0 +1,22 @@
+services:
+  sayitsocialgo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sayitsocial/sayitsocial:${TAG}
+    env_file:
+      - goapp.env
+    ports: 
+      - 8000:8000
+  postgres:
+    image: postgis/postgis:9.5-2.5-alpine
+    env_file:
+      - postgres.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    external: false
+
+
