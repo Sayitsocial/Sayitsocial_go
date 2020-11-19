@@ -1,8 +1,8 @@
 # START container setup
+ARG ARCH=
+FROM --platform=$BUILDPLATFORM golang:1.15.5-alpine3.12 AS build
 
-FROM golang:1.15.5-alpine3.12
-
-RUN apk add --update npm && npm install yarn -g
+RUN apk add --update --no-cache python2 npm make cmake && npm install yarn -g
 
 # END container setup
 WORKDIR /build
@@ -29,6 +29,9 @@ RUN go build -o ../dist/main main.go
 WORKDIR /dist
 RUN mkdir -p web/v2 && mv ../build/web/v2/build web/v2/dist
 RUN chmod +x main
+
+FROM alpine
+COPY --from=build /dist /dist
 
 EXPOSE 8000
 

@@ -1,5 +1,5 @@
 **/*.sh
-**/*.yaml
+*config*.yaml
 **/*.db
 **/*.log
 **/*.vscode
