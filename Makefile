@@ -17,4 +17,4 @@ buildx-goapp:
 	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag ${REGISTRY_PATH_GO}/sayitsocial\:${TAG_GO} .
 
 build-react:
-	docker build --tag ${REGISTRY_PATH_REACT}/sayitsocial-react\:${TAG_REACT} ./web/v2/ && docker push ${REGISTRY_PATH_REACT}/sayitsocial-react\:${TAG_REACT}
+	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag ${REGISTRY_PATH_REACT}/sayitsocial-react\:${TAG_REACT} ./web/v2/

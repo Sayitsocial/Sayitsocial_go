@@ -13,6 +13,9 @@ services:
       timeout: 10s
       retries: 5
   reactapp:
+    build:
+      context: ./web/v2
+      dockerfile: Dockerfile
     image: ${REGISTRY_PATH_REACT}/sayitsocial-react:${TAG_REACT}
     env_file:
       - react.env
@@ -31,6 +34,7 @@ services:
       - reactapp:/dist/web/v2/build
     depends_on:
       - postgres
+    restart: always
 
 volumes:
   pgdata:

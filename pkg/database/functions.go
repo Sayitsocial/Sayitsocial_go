@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	_ "github.com/lib/pq"
@@ -13,15 +14,14 @@ import (
 
 // GetConn returns Conn to database
 func GetConn() *sql.DB {
-
-	conn, err := sql.Open("postgres", helpers.PgConnString)
-	helpers.LogInfo(helpers.PgConnString)
-
-	if err != nil {
-		helpers.LogError(err.Error())
+	for {
+		conn, err := sql.Open("postgres", helpers.PgConnString)
+		if err != nil {
+			helpers.LogError(err.Error())
+			time.Sleep(30 * time.Second)
+		}
+		return conn
 	}
-
-	return conn
 }
 
 // RunMigrations runs all provided migrations
