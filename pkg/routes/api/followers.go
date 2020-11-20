@@ -42,7 +42,7 @@ type followerCreReq struct {
 //       200: successResponse
 func addFollowerHandler(w http.ResponseWriter, r *http.Request) {
 	var req followerCreReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -96,7 +96,7 @@ type followerDelReq struct {
 //       200: successResponse
 func removeFollowerHandler(w http.ResponseWriter, r *http.Request) {
 	var req followerDelReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

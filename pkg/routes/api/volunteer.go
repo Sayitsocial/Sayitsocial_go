@@ -58,7 +58,7 @@ type volCreReq struct {
 //       200: successResponse
 func volCreateHandler(w http.ResponseWriter, r *http.Request) {
 	var req volCreReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 
 	if err != nil {
 		helpers.LogError("Error in GET parameters : " + err.Error())
@@ -119,7 +119,7 @@ type volResponse struct {
 //       200: volResponse
 func volGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgGetReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

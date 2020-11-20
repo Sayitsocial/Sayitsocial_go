@@ -33,12 +33,7 @@ type orgCreReq struct {
 	// Type of Organisation
 	// required: true
 	// in: query
-	TypeOfOrg OrgType `schema:"org_type,required" json:"org_type"`
-
-	// Locality of Organisation
-	// required: true
-	// in: query
-	Locality string `schema:"locality,required" json:"locality"`
+	TypeOfOrg int `schema:"org_type,required" json:"org_type,string"`
 
 	// Owner of Organisation
 	// required: true
@@ -79,7 +74,7 @@ type orgCreReq struct {
 //       200: successResponse
 func orgCreateHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgCreReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 
 	if err != nil {
 		helpers.LogError("Error in GET parameters : " + err.Error())
@@ -116,7 +111,7 @@ type orgGetReq struct {
 
 	// Type of organisation
 	// in: query
-	TypeOfOrg int `schema:"type_of_org" json:"type_of_org"`
+	TypeOfOrg int `schema:"type_of_org" json:"type_of_org,string"`
 
 	// Location in [Longitude, Latitude, Radius]
 	// in: query
@@ -180,7 +175,7 @@ type orgShortResponse struct {
 //		 201: orgResponseShort
 func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgGetReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

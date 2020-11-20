@@ -63,7 +63,7 @@ type eventHostResp struct {
 //       200: eventHostResponse
 func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventHostReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -134,7 +134,7 @@ type eventAttendeeResponse struct {
 //       200: eventAttendeeResponse
 func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventAttendeeReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -250,7 +250,7 @@ type eventShortResponse struct {
 //		 - 201: eventShortResponse
 func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req eventGetReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -337,8 +337,9 @@ type eventPostReq struct {
 func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
 	model := event.Initialize(nil)
 	defer model.Close()
+
 	var req eventPostReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

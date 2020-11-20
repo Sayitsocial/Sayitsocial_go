@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -23,17 +26,26 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 )
 
-// OrgType is type of organisation
-type OrgType int
-
 // enums for org types
 const (
-	NGO     OrgType = 0
-	Company OrgType = 1
-	Social  OrgType = 2
+	NGO     int = 0
+	Company int = 1
+	Social  int = 2
 )
 
+func readAndUnmarshal(r *http.Request, req interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(body, req)
+	return err
+}
+
 func (u volCreReq) PutInDB() error {
+	if u.Email == "" || u.Password == "" || u.FirstName == "" || u.LastName == "" {
+		return errors.New("No parameters should be empty")
+	}
 	ctx := context.Background()
 	tx, err := database.GetConn().BeginTx(ctx, nil)
 	if err != nil {
@@ -56,6 +68,9 @@ func (u volCreReq) PutInDB() error {
 		return err
 	}
 
+	helpers.LogInfo(u.FirstName)
+	helpers.LogInfo(u.LastName)
+
 	modelData := voldata.Initialize(tx)
 
 	err = modelData.Create(voldata.VolData{
@@ -71,6 +86,9 @@ func (u volCreReq) PutInDB() error {
 }
 
 func (f followerCreReq) PutInDB() error {
+	if f.OrganisationID == "" || f.VolunteerID == "" {
+		return errors.New("No parameters should be empty")
+	}
 	model := followerbridge.Initialize(nil)
 	defer model.Close()
 	uid := uuid.New().String()
@@ -85,6 +103,9 @@ func (f followerCreReq) PutInDB() error {
 }
 
 func (o orgCreReq) PutInDB() error {
+	if o.Email == "" || o.Password == "" || o.OrgName == "" || o.Owner == "" && len(o.Location) == 2 {
+		return errors.New("No parameters should be empty")
+	}
 	ctx := context.Background()
 	tx, err := database.GetConn().BeginTx(ctx, nil)
 	if err != nil {
@@ -112,7 +133,6 @@ func (o orgCreReq) PutInDB() error {
 	err = modelData.Create(orgdata.OrgData{
 		OrganisationID: uid,
 		DisplayName:    o.OrgName,
-		Locality:       o.Locality,
 		RegistrationNo: o.RegistrationNo,
 		ContactEmail:   o.Email,
 		Owner:          o.Owner,
@@ -293,7 +313,7 @@ func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
 			}
 		}(),
 		Short: e.Short,
-				// BUG: Gorilla decoder cant parse arrays properly sometimes
+		// BUG: Gorilla decoder cant parse arrays properly sometimes
 		SortBy: func() []string {
 			if len(e.SortBy) == 1 {
 				return strings.Split(e.SortBy[0], ",")

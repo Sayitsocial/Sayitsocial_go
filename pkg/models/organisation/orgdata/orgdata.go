@@ -18,7 +18,6 @@ const (
 type OrgData struct {
 	OrganisationID string                 `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
 	DisplayName    string                 `row:"display_name" type:"like" json:"display_name"`
-	Locality       string                 `row:"locality" type:"like" json:"locality,omitempty"`
 	RegistrationNo string                 `row:"registration_no" type:"exact" json:"registration_no,omitempty"`
 	ContactEmail   string                 `row:"contact_email" type:"like" json:"contact_email,omitempty"`
 	ContactPhone   string                 `row:"contact_phone" type:"like" json:"contact_phone"`
@@ -50,7 +49,6 @@ func (o *OrgData) MarshalJSON() ([]byte, error) {
 		o.Desc = ""
 		o.Owner = ""
 		o.Achievements = ""
-		o.Locality = ""
 	}
 	return json.Marshal(&struct {
 		*tmp
