@@ -35,8 +35,4 @@ COPY --from=build /dist /dist
 
 EXPOSE 8000
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
-RUN chmod +x /wait
-
-# RUN apk add --update bash && rm -rf /var/cache/apk/*
-ENTRYPOINT ["/bin/sh", "-c", "/wait && /dist/main"]
+ENTRYPOINT ["/bin/sh", "-c", "/dist/main"]

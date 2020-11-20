@@ -1,6 +1,17 @@
 version: '3'
 
 services:
+  postgres:
+    image: postgis/postgis:9.5-2.5-alpine
+    env_file:
+      - postgres.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["/bin/sh", "-c", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
   sayitsocialgo:
     build:
       context: .
@@ -10,12 +21,6 @@ services:
       - goapp.env
     ports: 
       - 8000:8000
-  postgres:
-    image: postgis/postgis:9.5-2.5-alpine
-    env_file:
-      - postgres.env
-    volumes:
-      - pgdata:/var/lib/postgresql/data
 
 volumes:
   pgdata:
