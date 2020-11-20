@@ -6,13 +6,9 @@
 **/*.history
 **/*.out
 **/*__debug_bin
-**/web/dist
+**/web
 **/*.identifier
 **/id_rsa
-
-**/node_modules
-*.pnp
-*.pnp.js
 
 # testing
 **/coverage
