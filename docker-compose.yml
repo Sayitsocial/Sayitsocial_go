@@ -2,7 +2,7 @@ version: '3'
 
 services:
   postgres:
-    image: postgis/postgis:9.5-2.5-alpine
+    image: ${REGISTRY_PATH_POSTGRES}/postgis:9.5-2.5-alpine
     env_file:
       - postgres.env
     volumes:
@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: sayitsocial/sayitsocial:${TAG}
+    image: ${REGISTRY_PATH_GO}/sayitsocial:${TAG}
     env_file:
       - goapp.env
     ports: 
