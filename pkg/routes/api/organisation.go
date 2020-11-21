@@ -12,44 +12,41 @@ import (
 
 // Signup details for Organisation
 //
-//swagger:parameters createOrganisation
+//swagger:model
 type orgCreReq struct {
 
 	// Email of Organisation
 	// required: true
-	// in: query
 	Email string `schema:"email,required" json:"email"`
 
 	// Password of user
 	// required: true
-	// in: query
 	Password string `schema:"password,required" json:"password"`
 
 	// Name of Organisation
 	// required: true
-	// in: query
 	OrgName string `schema:"org_name,required" json:"org_name"`
 
 	// Type of Organisation
 	// required: true
-	// in: query
 	TypeOfOrg int `schema:"org_type,required" json:"org_type,string"`
 
 	// Owner of Organisation
 	// required: true
-	// in: query
 	Owner string `schema:"owner,required" json:"owner"`
 
 	// Registration Number of organisation according to ngodarpan if applicable
 	// required: false
-	// in: query
 	RegistrationNo string `schema:"reg_no,required" json:"reg_no"`
 
 	// Location in [Longitude, Latitude]
-	// in: query
 	// minItems: 2
 	// maxItems: 2
 	Location []float64 `schema:"location" json:"location"`
+}
+
+type orgCreModel struct {
+	Organisation orgCreReq
 }
 
 // swagger:route POST /api/org/create organisation createOrganisation
@@ -139,7 +136,6 @@ type orgDataShort struct {
 
 // swagger:response orgResponse
 type orgResponse struct {
-	// in: body
 	org orgdata.OrgData
 }
 
@@ -147,7 +143,6 @@ type orgResponse struct {
 // Status code will be 200
 // swagger:response orgResponseShort
 type orgShortResponse struct {
-	// in: body
 	org orgDataShort
 }
 

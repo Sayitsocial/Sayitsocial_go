@@ -36,7 +36,7 @@ type eventHostReq struct {
 
 // swagger:response eventHostResponse
 type eventHostResp struct {
-	// in: body
+	// in: query
 	eventHost eventhost.EventHostBridge
 }
 
@@ -107,7 +107,7 @@ type eventAttendeeReq struct {
 
 // swagger:response eventAttendeeResponse
 type eventAttendeeResponse struct {
-	// in: body
+	// in: query
 	eventAttendee eventattendee.EventAttendeeBridge
 }
 
@@ -213,7 +213,7 @@ type eventShort struct {
 
 // swagger:response eventResponse
 type eventResponse struct {
-	// in: body
+	// in: query
 	event event.Event
 }
 
@@ -221,7 +221,7 @@ type eventResponse struct {
 // Status code will be 200
 // swagger:response eventShortResponse
 type eventShortResponse struct {
-	// in: body
+	// in: query
 	event eventShort
 }
 
@@ -274,44 +274,40 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Event details
-//
-//swagger:parameters createEvent
+//swagger:model
 type eventPostReq struct {
 
 	// ID of host of event (org)
-	// in: query
 	OrganisationID string `schema:"organisation_id" json:"organisation_id"`
 
 	// ID of host of event (user)
-	// in: query
 	VolunteerID string `schema:"volunteer_id" json:"volunteer_id"`
 
 	// Name of event
-	// in: query
 	Name string `schema:"name,required" json:"name"`
 
 	// Name of event
-	// in: query
 	Description string `schema:"description,required" json:"description"`
 
 	// Start time of event [unix timestamp]
-	// in: query
 	StartTime int64 `schema:"start_time,required" json:"start_time"`
 
 	// Type of category [Refer to event_category]
-	// in: query
 	Category int `schema:"category,required" json:"category"`
 
 	// Type of category [0 - Virtual, 1 - Physical]
-	// in: query
 	TypeOfEvent int64 `schema:"type_of_event,required" json:"type_of_event"`
 
 	// Location in [Longitude, Latitude]
-	// in: query
 	// minItems: 2
 	// maxItems: 2
 	Location []float64 `schema:"location" json:"location"`
+}
+
+//swagger:parameters createEvent
+type eventPostModel struct {
+	//in: query
+	EventsPostModel eventPostReq
 }
 
 // swagger:route POST /api/event/create event createEvent

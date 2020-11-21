@@ -38,8 +38,8 @@ func (a Authentication) Register(r *mux.Router) {
 
 	authRouter.HandleFunc("/login", loginHandler).Methods("POST", "GET")
 	authRouter.HandleFunc("/logout", logoutHandler).Methods("POST")
-	authRouter.HandleFunc("/jwt-login", jwtLoginHandler).Methods("GET")
-	authRouter.HandleFunc("/jwt-refresh", jwtRefreshHandler).Methods("GET")
+	authRouter.HandleFunc("/jwt-login", jwtLoginHandler).Methods("POST")
+	authRouter.HandleFunc("/jwt-refresh", jwtRefreshHandler).Methods("POST")
 	authRouter.HandleFunc("/isLogged", isLogged).Methods("GET")
 }
 
@@ -117,7 +117,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // jwtLoginHandler
-// swagger:route GET /auth/jwt-login auth JWTLogin
+// swagger:route POSt /auth/jwt-login auth JWTLogin
 //
 // Login to existing account
 //
@@ -181,7 +181,7 @@ func jwtLoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // jwtRefreshHandler
-// swagger:route GET /auth/jwt-refresh auth JWTRefresh
+// swagger:route POST /auth/jwt-refresh auth JWTRefresh
 //
 // Login to existing account
 //

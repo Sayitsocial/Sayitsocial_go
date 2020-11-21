@@ -34,11 +34,17 @@ const (
 )
 
 func readAndUnmarshal(r *http.Request, req interface{}) error {
+	if r.Method == "GET" {
+		err := decoder.Decode(req, r.URL.Query())
+		helpers.LogInfo(r.URL.Query())
+		return err
+	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 	err = json.Unmarshal(body, req)
+	helpers.LogInfo(req)
 	return err
 }
 
@@ -85,7 +91,7 @@ func (u volCreReq) PutInDB() error {
 	return tx.Commit()
 }
 
-func (f followerCreReq) PutInDB() error {
+func (f followerReq) PutInDB() error {
 	if f.OrganisationID == "" || f.VolunteerID == "" {
 		return errors.New("No parameters should be empty")
 	}
@@ -281,7 +287,7 @@ func (e eventHostReq) CastToModel() (eventhost.EventHostBridge, error) {
 
 // CastToModel converts request struct to model struct
 func (e eventAttendeeReq) CastToModel() (eventattendee.EventAttendeeBridge, error) {
-	if e.GeneratedID == "" && e.VolunteerID == "" {
+	if e.GeneratedID == "" && e.VolunteerID == "" && e.EventID == "" {
 		return eventattendee.EventAttendeeBridge{}, errors.New("Requires one parameter")
 	}
 	return eventattendee.EventAttendeeBridge{
@@ -331,7 +337,7 @@ func (e volGetReq) CastToModel() (voldata.VolData, error) {
 	}, nil
 }
 
-func (f followerDelReq) RemoveFromDB() error {
+func (f followerReq) RemoveFromDB() error {
 	if f.OrganisationID == "" || f.VolunteerID == "" {
 		return errors.New("All parameters are required")
 	}

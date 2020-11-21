@@ -50,11 +50,11 @@ const (
 )
 
 func initPaths() {
-	configPath = GetExecutableDirectory()
+	configPath = GetWorkingDirectory()
 	PgConnString = fmt.Sprintf("port=%s host=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("hostport"), os.Getenv("hostname"), os.Getenv("username"), os.Getenv("password"), os.Getenv("databasename"))
-	LogsPath = filepath.Join(GetExecutableDirectory(), "logs")
-	StaticPath = filepath.Join(GetExecutableDirectory(), "web/v1")
-	StaticPath2 = filepath.Join(GetExecutableDirectory(), "web/v2/build")
-	SwaggerPath = filepath.Join(GetExecutableDirectory(), "swagger")
-	DatabasePath = filepath.Join(GetExecutableDirectory(), "database")
+	LogsPath = filepath.Join(GetWorkingDirectory(), "logs")
+	StaticPath = filepath.Join(GetWorkingDirectory(), "web/v1")
+	StaticPath2 = filepath.Join(GetWorkingDirectory(), "web/v2/build")
+	SwaggerPath = filepath.Join(GetWorkingDirectory(), "swagger")
+	DatabasePath = filepath.Join(GetWorkingDirectory(), "database")
 }

@@ -27,7 +27,7 @@ func GetConn() *sql.DB {
 // RunMigrations runs all provided migrations
 func RunMigrations() error {
 	migrationsAuth := &migrate.HttpFileSystemMigrationSource{
-		FileSystem: http.Dir(filepath.Join(helpers.GetExecutableDirectory(), "/pkg/database/migrations/")),
+		FileSystem: http.Dir(filepath.Join(helpers.GetWorkingDirectory(), "/pkg/database/migrations/")),
 	}
 
 	err := doMigrate(migrationsAuth)

@@ -2,18 +2,21 @@ package authentication
 
 // LoginReq contains Login details
 //
-//swagger:parameters login JWTLogin
+//swagger:model
 type LoginReq struct {
-
 	// Username of user
 	// required: true
-	// in: query
 	Username string `schema:"username,required" json:"username"`
 
 	// Password of user
 	// required: true
-	// in: query
 	Password string `schema:"password,required" json:"password"`
+}
+
+//swagger:parameters login JWTLogin
+type loginModel struct {
+	// in: body
+	Login LoginReq
 }
 
 // JWTResp response for JWT logins
@@ -25,11 +28,15 @@ type JWTResp struct {
 }
 
 // JWTRefreshReq contains Token for refresh
-//
-//swagger:parameters login JWTRefresh
+// swagger:model
 type JWTRefreshReq struct {
-	// in: query
-	// required: true
 	// Token provided after successful login
+	// required: true
 	Token string `json:"token"`
+}
+
+//swagger:parameters JWTRefresh
+type jwtModel struct {
+	// in: body
+	JWT JWTRefreshReq
 }

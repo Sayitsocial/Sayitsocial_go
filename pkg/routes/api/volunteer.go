@@ -12,28 +12,29 @@ import (
 
 // Signup details for Volunteer
 //
-//swagger:parameters createVolunteer
+//swagger:model
 type volCreReq struct {
 
 	// First name of user
 	// required: true
-	// in: query
 	FirstName string `schema:"first_name,required" json:"first_name"`
 
 	// Last name of user
 	// required: true
-	// in: query
 	LastName string `schema:"last_name,required" json:"last_name"`
 
 	// Email of user
 	// required: true
-	// in: query
 	Email string `schema:"email,required" json:"email"`
 
 	// Password of user
 	// required: true
-	// in: query
 	Password string `schema:"password,required" json:"password"`
+}
+
+//swagger:parameters createVolunteer
+type volCreModel struct {
+	Volunteer volCreReq
 }
 
 // swagger:route POST /api/vol/create volunteer createVolunteer
@@ -92,7 +93,6 @@ type volGetReq struct {
 
 // swagger:response volResponse
 type volResponse struct {
-	// in: body
 	vol voldata.VolData
 }
 
