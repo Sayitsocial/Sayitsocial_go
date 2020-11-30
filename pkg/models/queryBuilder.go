@@ -31,6 +31,7 @@ type inbuiltType interface {
 	selectQuery(tableName string, rowTag string) tmpHolder
 	isEmpty() bool
 	createArgs() string
+	ignoreScan() bool
 }
 
 // GeographyPoints is a struct that holds longitude, latitude of a location and optionally radius
@@ -66,6 +67,10 @@ func (g GeographyPoints) isEmpty() bool {
 	return (g.Latitude == "" || g.Longitude == "")
 }
 
+func (GeographyPoints) ignoreScan() bool {
+	return false
+}
+
 type SortBy struct {
 	Column string `json:"column"`
 	Mode   string `json:"mode"`
@@ -91,11 +96,39 @@ func (s SortBy) isEmpty() bool {
 	return (s.Column == "")
 }
 
+func (SortBy) ignoreScan() bool {
+	return true
+}
+
 // Page holds limit and offset to implement pagination
-// type Page struct {
-// 	Limit  int64
-// 	Offset int64
-// }
+type Page struct {
+	Limit  int64
+	Offset int64
+}
+
+func (Page) memberSearchQuery(tableName string, rowTag string) string {
+	return ""
+}
+
+func (Page) memberCreateQuery(tableName string, rowTag string) string {
+	return ""
+}
+
+func (Page) selectQuery(tableName string, rowTag string) tmpHolder {
+	return tmpHolder{}
+}
+
+func (Page) createArgs() string {
+	return ""
+}
+
+func (s Page) isEmpty() bool {
+	return (s.Limit == 0)
+}
+
+func (Page) ignoreScan() bool {
+	return true
+}
 
 func getAllMembers(inte interface{}, tableName string, isCreate bool) string {
 	t := reflect.TypeOf(inte)
@@ -194,7 +227,6 @@ func getSearchBy(inte interface{}, tableName string, appendTableName bool, force
 		}
 	}
 	cleanTmpHolders(&searchBy)
-	helpers.LogInfo(searchBy)
 	return
 }
 
@@ -229,8 +261,22 @@ func getOrderBy(inte interface{}) (orderQuery string) {
 
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).Kind() == reflect.Struct && isInbuiltType(v.Field(i)) {
-			if val, ok := v.Field(i).Interface().(SortBy); ok {
+			if val, ok := v.Field(i).Interface().(SortBy); ok && !checkEmpty(v.Field(i)) {
 				return fmt.Sprintf(" ORDER BY %s %s", val.Column, val.Mode)
+			}
+		}
+	}
+	return ""
+}
+
+func getLimit(inte interface{}) (limitQuery string) {
+	v := reflect.ValueOf(inte)
+	for i := 0; i < v.NumField(); i++ {
+		if v.Field(i).Kind() == reflect.Struct && isInbuiltType(v.Field(i)) {
+			_, ok1 := v.Field(i).Interface().(Page)
+			helpers.LogInfo(ok1)
+			if val, ok := v.Field(i).Interface().(Page); ok && !checkEmpty(v.Field(i)) {
+				return fmt.Sprintf(" LIMIT %d OFFSET %d", val.Limit, val.Offset)
 			}
 		}
 	}
@@ -240,7 +286,7 @@ func getOrderBy(inte interface{}) (orderQuery string) {
 // QueryBuilderGet generates normal get queries for non nested structures
 func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
 	args, where := getArgsWhere(getSearchBy(i, tableName, true, false), 1)
-	return fmt.Sprintf("SELECT %s FROM %s %s %s", getAllMembers(i, tableName, false), tableName, where, getOrderBy(i)), args
+	return fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(i, tableName, false), tableName, where, getOrderBy(i), getLimit(i)), args
 }
 
 func getStructCreateArg(v reflect.Value, t reflect.StructField) interface{} {
@@ -344,7 +390,8 @@ func getInnerJoin(inte interface{}, tableName string) string {
 // QueryBuilderJoin generates get queries for nested structures with inner join support
 func QueryBuilderJoin(inte interface{}, tableName string) (string, []interface{}) {
 	args, where := getArgsWhere(getSearchBy(inte, tableName, true, false), 1)
-	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(inte, tableName, false), tableName, getInnerJoin(inte, tableName), where, getOrderBy(inte))
+	helpers.LogInfo(getLimit(inte))
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s", getAllMembers(inte, tableName, false), tableName, getInnerJoin(inte, tableName), where, getOrderBy(inte), getLimit(inte))
 	return query, args
 }
 
@@ -373,6 +420,9 @@ func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
 			continue
 		}
 		if dd.Kind() == reflect.Struct {
+			if isInbuiltType(dd) && dd.Interface().(inbuiltType).ignoreScan() {
+				continue
+			}
 			ptrs = append(ptrs, getPtrs(dest.Field(i), typeOf.Field(i).Type)...)
 			continue
 		}
@@ -545,9 +595,7 @@ func getForeignRow(field reflect.StructField) string {
 func isInbuiltType(v reflect.Value) bool {
 	if _, ok := v.Interface().(inbuiltType); ok && v.Kind() == reflect.Struct {
 		switch v.Interface().(type) {
-		case GeographyPoints:
-			return true
-		case SortBy:
+		case GeographyPoints, SortBy, Page:
 			return true
 		}
 	}

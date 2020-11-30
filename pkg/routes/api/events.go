@@ -200,6 +200,10 @@ type eventGetReq struct {
 	// Get short results
 	// in: query
 	Short bool `schema:"short" json:"short"`
+
+	// Pagination
+	// in: query
+	Page int64 `schema:"page" json:"page"`
 }
 
 // swagger:model

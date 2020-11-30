@@ -47,6 +47,8 @@ const (
 	DbSchemaVol    = "volunteer"
 	DbSchemaEvents = "events"
 	DbSchemaPublic = "public"
+
+	MaxPage = 10
 )
 
 func initPaths() {

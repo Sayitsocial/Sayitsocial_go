@@ -26,8 +26,9 @@ type Event struct {
 	TypeOfEvent   int64                    `row:"type_of_event" type:"exact" json:"type_of_event"`
 	Category      categories.EventCategory `row:"category" type:"exact" fk:"events.event_category" fr:"generated_id" json:"-"`
 	TrendingIndex int64                    `row:"trending_index" type:"exact" json:"trending_index"`
-	SortBy        models.SortBy            `type:"sort" scan:"ignore" json:"-"`
+	SortBy        models.SortBy            `type:"sort" json:"-"`
 	Short         bool                     `scan:"ignore" json:"-"`
+	Page          models.Page              `json:"page"`
 }
 
 func (e *Event) MarshalJSON() ([]byte, error) {

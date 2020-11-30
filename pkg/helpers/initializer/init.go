@@ -7,7 +7,6 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -25,11 +24,6 @@ func Init() error {
 		helpers.LogError(err.Error())
 		return err
 	}
-
-	helpers.LogInfo(event.Initialize(nil).Update(event.Event{
-		EventID: "1",
-		Name:    "Updated event",
-	}))
 
 	err = initWebApp()
 	if err != nil {
