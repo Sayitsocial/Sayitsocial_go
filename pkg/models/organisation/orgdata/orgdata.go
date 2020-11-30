@@ -27,7 +27,7 @@ type OrgData struct {
 	TypeOfOrg      int                    `row:"type_of_org" type:"like" json:"type_of_org"`
 	Followers      uint64                 `row:"followers" type:"exact" json:"follower_count"`
 	Location       models.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
-	SortBy         []string               `type:"sort" scan:"ignore" json:"-"`
+	SortBy         models.SortBy          `json:"-"`
 	Short          bool                   `scan:"ignore" json:"-"`
 }
 
@@ -80,7 +80,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data OrgData) error {
-	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
+	query, args := models.QueryBuilderCreate(data, schema, tableName)
 
 	var err error
 	if a.trans != nil {

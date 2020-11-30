@@ -52,7 +52,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data EventHostBridge) error {
-	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
+	query, args := models.QueryBuilderCreate(data, schema, tableName)
 
 	var err error
 	if a.trans != nil {

@@ -50,7 +50,7 @@ func (a Model) Close() {
 func (a Model) Create(auth Auth) error {
 	auth.Password = hashPassword(auth.Password)
 
-	query, args := models.QueryBuilderCreate(auth, schema+"."+tableName)
+	query, args := models.QueryBuilderCreate(auth, schema, tableName)
 
 	var err error
 	if a.trans != nil {

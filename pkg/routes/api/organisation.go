@@ -42,7 +42,7 @@ type orgCreReq struct {
 	// Location in [Longitude, Latitude]
 	// minItems: 2
 	// maxItems: 2
-	Location []float64 `schema:"location" json:"location"`
+	Location models.GeographyPoints `schema:"location" json:"location"`
 }
 
 type orgCreModel struct {
@@ -114,11 +114,11 @@ type orgGetReq struct {
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location []float64 `schema:"location" json:"location"`
+	Location models.GeographyPoints `schema:"location" json:"location"`
 
 	// Sort results by [followers, ASC/DESC]
 	// in: query
-	SortBy []string `schema:"sortby" json:"sortby"`
+	SortBy models.SortBy `schema:"sortby" json:"sortby"`
 
 	// Get short results
 	// in: query

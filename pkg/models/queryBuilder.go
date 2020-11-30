@@ -8,11 +8,15 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+)
+
+const (
+	geographyPoints = "GeographyPoints"
+	sortBy          = "SortBy"
 )
 
 type tmpHolder struct {
@@ -21,161 +25,225 @@ type tmpHolder struct {
 	value  reflect.Value
 }
 
+type inbuiltType interface {
+	memberSearchQuery(tableName string, rowTag string) string
+	memberCreateQuery(tableName string, rowTag string) string
+	selectQuery(tableName string, rowTag string) tmpHolder
+	isEmpty() bool
+	createArgs() string
+}
+
 // GeographyPoints is a struct that holds longitude, latitude of a location and optionally radius
 // Radius can be specified to initiate a search of other points in radius from specified coordinates
 type GeographyPoints struct {
-	Longitude float64 `json:"longitude"`
-	Latitude  float64 `json:"latitude"`
-	Radius    float64 `scan:"ignore" json:"-"`
+	Longitude string `json:"longitude"`
+	Latitude  string `json:"latitude"`
+	Radius    string `scan:"ignore" json:"-"`
 }
 
-func getAllMembers(inte interface{}, tableName string, isOuter bool) string {
+func (GeographyPoints) memberSearchQuery(tableName string, rowTag string) string {
+	return fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry)", tableName, rowTag, tableName, rowTag)
+}
+
+func (g GeographyPoints) memberCreateQuery(tableName string, rowTag string) string {
+	return rowTag
+}
+
+func (g GeographyPoints) selectQuery(tableName string, rowTag string) tmpHolder {
+	return tmpHolder{
+		name:   fmt.Sprintf("ST_DWithin(%s.%s, ST_MakePoint(%v,%v), %v)", tableName, rowTag, g.Longitude, g.Latitude, g.Radius),
+		typeOf: "onlyvalue",
+		value:  reflect.ValueOf(g),
+	}
+
+}
+
+func (g GeographyPoints) createArgs() string {
+	return fmt.Sprintf("ST_SetSRID(ST_MakePoint(%v,%v), 4326)", g.Longitude, g.Latitude)
+}
+
+func (g GeographyPoints) isEmpty() bool {
+	return (g.Latitude == "" || g.Longitude == "")
+}
+
+type SortBy struct {
+	Column string `json:"column"`
+	Mode   string `json:"mode"`
+}
+
+func (SortBy) memberSearchQuery(tableName string, rowTag string) string {
+	return ""
+}
+
+func (SortBy) memberCreateQuery(tableName string, rowTag string) string {
+	return ""
+}
+
+func (SortBy) selectQuery(tableName string, rowTag string) tmpHolder {
+	return tmpHolder{}
+}
+
+func (SortBy) createArgs() string {
+	return ""
+}
+
+func (s SortBy) isEmpty() bool {
+	return (s.Column == "")
+}
+
+// Page holds limit and offset to implement pagination
+// type Page struct {
+// 	Limit  int64
+// 	Offset int64
+// }
+
+func getAllMembers(inte interface{}, tableName string, isCreate bool) string {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
 
 	var ret = ""
 	for i := 0; i < v.NumField(); i++ {
-		if t.Field(i).Tag.Get("type") != "sort" && t.Field(i).Tag.Get(helpers.RowStructTag) != "" {
-			if v.Field(i).Kind() == reflect.Struct {
-				if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
-					ret += fmt.Sprintf("ST_X(%s.%s::geometry), ST_Y(%s.%s::geometry),", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
-				} else if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
-					ret += getAllMembers(v.Field(i).Interface(), foreignTable, false)
-				} else {
-					ret += getAllMembers(v.Field(i).Interface(), tableName, false)
-				}
+		if t.Field(i).Tag.Get(helpers.RowStructTag) != "" {
+			if isCreate && checkEmpty(v.Field(i)) {
 				continue
-			} else {
-				ret += fmt.Sprintf("%s.%s", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
 			}
 			ret += ","
+			if v.Field(i).Kind() == reflect.Struct {
+				if isInbuiltType(v.Field(i)) {
+					if isCreate {
+						ret += v.Field(i).Interface().(inbuiltType).memberCreateQuery(tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+						continue
+					}
+					ret += v.Field(i).Interface().(inbuiltType).memberSearchQuery(tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+					continue
+				}
+				if !isCreate {
+					if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
+						ret += getAllMembers(v.Field(i).Interface(), foreignTable, isCreate)
+						continue
+					}
+					ret += getAllMembers(v.Field(i).Interface(), tableName, isCreate)
+					continue
+				}
+				for j := 0; j < v.Field(i).NumField(); j++ {
+					if t.Field(i).Type.Field(j).Tag.Get("pk") != "" && !checkEmpty(v.Field(i).Field(j)) {
+						ret += fmt.Sprintf("%s", t.Field(i).Tag.Get(helpers.RowStructTag))
+					}
+				}
+			} else {
+				if tableName != "" {
+					ret += fmt.Sprintf("%s.%s", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+					continue
+				}
+				ret += fmt.Sprintf("%s", t.Field(i).Tag.Get(helpers.RowStructTag))
+			}
 		}
 	}
-	return func() string {
-		if isOuter {
-			return strings.TrimSuffix(ret, ",")
-		}
-		return ret
-	}()
+	return strings.Trim(ret, ",")
 }
 
-func getSearchBy(inte interface{}, tableName string, appendTableName bool) (totalSearchByCount int, searchBy []tmpHolder) {
+func cleanTmpHolders(t *[]tmpHolder) {
+	for i, a := range *t {
+		if a.name == "" && a.typeOf == "" {
+			(*t)[i] = (*t)[len(*t)-1]
+			*t = (*t)[:len(*t)-1]
+		}
+	}
+}
+
+func getSearchBy(inte interface{}, tableName string, appendTableName bool, forcePK bool) (searchBy []tmpHolder) {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
 	for i := 0; i < v.NumField(); i++ {
-		if _, ok := v.Field(i).Interface().(GeographyPoints); !ok && v.Field(i).Kind() == reflect.Struct {
-			if appendTableName {
-				if foreignTable := t.Field(i).Tag.Get("fk"); foreignTable != "" {
-					tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), foreignTable, true)
-					totalSearchByCount += tmpCount
-					searchBy = append(searchBy, tmpSearchBy...)
-				} else {
-					tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), tableName, true)
-					totalSearchByCount += tmpCount
-					searchBy = append(searchBy, tmpSearchBy...)
-				}
+		if forcePK {
+			if pk, _ := isPK(t.Field(i)); !pk || checkEmpty(v.Field(i)) {
 				continue
 			}
 		}
-		if !checkEmpty(v.Field(i)) {
-			if _, ok := v.Field(i).Interface().(GeographyPoints); ok {
-				searchBy = append(searchBy, tmpHolder{
-					name: func() string {
-						if appendTableName {
-							return fmt.Sprintf("ST_DWithin(%s.%s, ST_MakePoint(%v,%v), %v)", tableName, t.Field(i).Tag.Get(helpers.RowStructTag), v.Field(i).FieldByName("Longitude").Interface(), v.Field(i).FieldByName("Latitude").Interface(), v.Field(i).FieldByName("Radius").Interface())
-						}
-						return fmt.Sprintf("ST_DWithin(%s, ST_MakePoint(%v,%v), %v)", t.Field(i).Tag.Get(helpers.RowStructTag), v.Field(i).FieldByName("Longitude").Interface(), v.Field(i).FieldByName("Latitude").Interface(), v.Field(i).FieldByName("Radius").Interface())
-					}(),
-					typeOf: "onlyvalue",
-					value:  reflect.ValueOf(nil),
-				})
+		if v.Field(i).Kind() == reflect.Struct {
+			if appendTableName {
+				if isInbuiltType(v.Field(i)) && !checkEmpty(v.Field(i)) {
+					searchBy = append(searchBy, v.Field(i).Interface().(inbuiltType).selectQuery(tableName, t.Field(i).Tag.Get(helpers.RowStructTag)))
+					continue
+				}
+				var tmpSearchBy []tmpHolder
+				switch foreignTable := t.Field(i).Tag.Get("fk"); foreignTable {
+				case "":
+					tmpSearchBy = getSearchBy(v.Field(i).Interface(), foreignTable, appendTableName, forcePK)
+					break
+				default:
+					tmpSearchBy = getSearchBy(v.Field(i).Interface(), tableName, appendTableName, forcePK)
+					break
+				}
+				searchBy = append(searchBy, tmpSearchBy...)
+
 				continue
 			}
-
-			if val := t.Field(i).Tag.Get("type"); val != "" {
-				searchBy = append(searchBy, tmpHolder{
-					name: func() string {
-						if !appendTableName {
-							return fmt.Sprintf("%s ", t.Field(i).Tag.Get(helpers.RowStructTag))
-						}
-						return fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
-					}(),
-					typeOf: val,
-					value: func() reflect.Value {
-						if v.Field(i).Kind() == reflect.Struct {
-							tmpCount, tmpSearchBy := getSearchBy(v.Field(i).Interface(), "", false)
-							if tmpCount > 0 {
-								if tmpSearchBy[0].value.Kind() != reflect.Struct {
-									return tmpSearchBy[0].value
-								}
-							}
-							return reflect.ValueOf(nil)
-
-						}
-						return v.Field(i)
-					}(),
-				})
-				totalSearchByCount++
-			}
+		}
+		if val := t.Field(i).Tag.Get("type"); val != "" && !checkEmpty(v.Field(i)) {
+			searchBy = append(searchBy, tmpHolder{
+				name: func() string {
+					if !appendTableName {
+						return fmt.Sprintf("%s ", t.Field(i).Tag.Get(helpers.RowStructTag))
+					}
+					return fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(helpers.RowStructTag))
+				}(),
+				typeOf: val,
+				value:  v.Field(i),
+			})
 		}
 	}
+	cleanTmpHolders(&searchBy)
+	helpers.LogInfo(searchBy)
 	return
 }
 
-func getArgsWhere(totalSearchByCount int, searchBy []tmpHolder) ([]interface{}, string) {
+func getArgsWhere(searchBy []tmpHolder, index int) ([]interface{}, string) {
 	args := make([]interface{}, 0)
 	if len(searchBy) == 0 {
 		return nil, ""
 	}
 	query := " WHERE "
-	for searchByCount, r := range searchBy {
+	for _, r := range searchBy {
 		if r.name != "" && r.name != " " {
-			if r.typeOf != "sort" {
-				if r.typeOf == "exact" {
-					query += fmt.Sprintf("%v = $%d", r.name, searchByCount+1)
-				} else if r.typeOf == "like" {
-					query += fmt.Sprintf("%v ILIKE $%d", r.name, searchByCount+1)
-				} else if r.typeOf == "onlyvalue" {
-					query += fmt.Sprintf("%v", r.name)
-				}
-				if searchByCount < totalSearchByCount-1 {
-					query += " AND "
-				}
-				if r.typeOf != "onlyvalue" {
-					args = append(args, r.value.Interface())
-				}
+			if r.typeOf == "exact" {
+				query += fmt.Sprintf("%v = $%d", r.name, index+1)
+			} else if r.typeOf == "like" {
+				query += fmt.Sprintf("%v ILIKE $%d", r.name, index+1)
+			} else if r.typeOf == "onlyvalue" {
+				query += fmt.Sprintf("%v", r.name)
+			}
+			if index < len(searchBy)-1 {
+				query += " AND "
+			}
+			if r.typeOf != "onlyvalue" {
+				args = append(args, r.value.Interface())
 			}
 		}
 	}
 	return args, strings.TrimSuffix(query, "AND ")
 }
 
-func getOrderBy(searchBy []tmpHolder) (orderArgs []string) {
-	for _, item := range searchBy {
-		if item.typeOf == "sort" {
-			return item.value.Interface().([]string)
+func getOrderBy(inte interface{}) (orderQuery string) {
+	v := reflect.ValueOf(inte)
+
+	for i := 0; i < v.NumField(); i++ {
+		if v.Field(i).Kind() == reflect.Struct && isInbuiltType(v.Field(i)) {
+			if val, ok := v.Field(i).Interface().(SortBy); ok {
+				return fmt.Sprintf(" ORDER BY %s %s", val.Column, val.Mode)
+			}
 		}
 	}
-	return nil
+	return ""
 }
 
 // QueryBuilderGet generates normal get queries for non nested structures
 func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
-	query := `SELECT ` + getAllMembers(i, tableName, true)
-
-	tmpCount, tmpHolder := getSearchBy(i, tableName, true)
-	args, where := getArgsWhere(tmpCount, tmpHolder)
-	query += " FROM " + tableName
-	query += where
-	sorts := getOrderBy(tmpHolder)
-	if sorts != nil && len(sorts) == 2 {
-		query += fmt.Sprintf(" ORDER BY %s %s", sorts[0], sorts[1])
-	}
-
-	return query, args
+	args, where := getArgsWhere(getSearchBy(i, tableName, true, false), 1)
+	return fmt.Sprintf("SELECT %s FROM %s %s %s", getAllMembers(i, tableName, false), tableName, where, getOrderBy(i)), args
 }
 
-func getSructCreateArg(v reflect.Value, t reflect.StructField) interface{} {
+func getStructCreateArg(v reflect.Value, t reflect.StructField) interface{} {
 	for k := 0; k < v.NumField(); k++ {
 		if t.Type.Field(k).Tag.Get(helpers.RowStructTag) == t.Tag.Get("fr") && !checkEmpty(v.Field(k)) {
 			return v.Field(k).Interface()
@@ -184,143 +252,80 @@ func getSructCreateArg(v reflect.Value, t reflect.StructField) interface{} {
 	return sql.NullString{}
 }
 
-// QueryBuilderCreate generates normal create queries for non nested structures
-func QueryBuilderCreate(i interface{}, tableName string) (string, []interface{}) {
-	t := reflect.TypeOf(i)
-	v := reflect.ValueOf(i)
-	query := `INSERT INTO ` + tableName + "("
-
-	var valuesCount = 0
-	args := make([]interface{}, 0)
-
-	// pqsl driver interprets function names passed in args as string and errors out
-	// TODO: Eliminate args and put everything in query
-	geographyValues := make(map[int]bool, 0)
+func getFieldsByTagMap(inte interface{}) (fieldsByTag map[string]reflect.Value) {
+	fieldsByTag = make(map[string]reflect.Value)
+	v := reflect.ValueOf(inte)
+	t := reflect.TypeOf(inte)
 
 	for i := 0; i < v.NumField(); i++ {
-		row := t.Field(i).Tag.Get(helpers.RowStructTag)
+		tag := t.Field(i).Tag.Get(helpers.RowStructTag)
+		if tag != "" {
+			fieldsByTag[tag] = v.Field(i)
+		}
+	}
+	return
+}
 
-		if checkEmpty(v.Field(i)) {
-			if ok, _ := isPK(t.Field(i)); ok {
+func getValuesCount(inte interface{}, index *int, message string) (ret string, args []interface{}) {
+	tagMap := getFieldsByTagMap(inte)
+	values := strings.Split(message, ",")
+	for _, i := range values {
+		if val, ok := tagMap[i]; ok {
+			if isInbuiltType(val) && !checkEmpty(val) {
+				ret += fmt.Sprintf("%s,", val.Interface().(inbuiltType).createArgs())
 				continue
 			}
-		}
-
-		if row != "" {
-			_, isGeographyPoints := v.Field(i).Interface().(GeographyPoints)
-			if isGeographyPoints {
-				geographyValues[i] = true
-			}
-
-			if valuesCount != 0 {
-				query += ", " + row
-			} else {
-				query += row
-			}
-
-			if !isGeographyPoints {
-				if v.Field(i).Kind() == reflect.Struct {
-					args = append(args, getSructCreateArg(v.Field(i), t.Field(i)))
-				} else {
-					args = append(args, v.Field(i).Interface())
+			if val.Kind() == reflect.Struct {
+				for i := 0; i < val.NumField(); i++ {
+					if val.Type().Field(i).Tag.Get("pk") != "" {
+						ret += fmt.Sprintf("$%d,", *index)
+						args = append(args, val.Field(i).Interface())
+						*index++
+						break
+					}
 				}
+				continue
 			}
-			valuesCount++
+			ret += fmt.Sprintf("$%d,", *index)
+			args = append(args, val.Interface())
+			*index++
 		}
 	}
+	return strings.Trim(ret, ","), args
+}
 
-	numbering := 0
-	query += ") values("
-	for i := 0; i < valuesCount; i++ {
-		if _, ok := geographyValues[i]; ok {
-			query += fmt.Sprintf("ST_SetSRID(ST_MakePoint(%v, %v), 4326)", v.Field(i).FieldByName("Longitude").Interface(), v.Field(i).FieldByName("Latitude").Interface())
-		} else {
-			numbering++
-			query += "$" + strconv.Itoa(numbering)
-		}
-
-		if i < valuesCount-1 {
-			query += ", "
-		}
-	}
-
-	query += ")"
-
-	return query, args
+// QueryBuilderCreate generates normal create queries for non nested structures
+func QueryBuilderCreate(i interface{}, schema string, tableName string) (string, []interface{}) {
+	members := getAllMembers(i, "", true)
+	index := 1
+	values, args := getValuesCount(i, &index, members)
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", schema+"."+tableName, members, values), args
 }
 
 // QueryBuilderDelete generates normal delete queries for non nested structures
 func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
-	// t := reflect.TypeOf(i)
-	// v := reflect.ValueOf(i)
-	//query := "DELETE FROM " + tableName + " WHERE "
-	args, q := getArgsWhere(getSearchBy(i, tableName, false))
+	args, q := getArgsWhere(getSearchBy(i, tableName, false, false), 1)
 	query := fmt.Sprintf("DELETE FROM %s %s", tableName, q)
-
-	// args := make([]interface{}, 0)
-
-	// for i := 0; i < v.NumField(); i++ {
-	// 	var value interface{} = nil
-	// 	if v.Field(i).Kind() == reflect.Struct {
-	// 		for j := 0; j < v.Field(i).NumField(); j++ {
-	// 			if ok, _ := isPK(v.Field(i).Type().Field(i)); ok {
-	// 				value = v.Field(i).Field(i).Interface()
-	// 			}
-	// 		}
-	// 	}
-
-	// 	if !checkEmpty(v.Field(i)) {
-	// 		if v.Field(i).Kind() != reflect.Struct || value != nil {
-	// 			row := t.Field(i).Tag.Get(helpers.RowStructTag)
-	// 			if row != "" {
-	// 				query += row + " = $1"
-	// 				args = append(args, v.Field(i).Interface())
-	// 				return query, args
-	// 			}
-	// 		}
-	// 	}
-	// }
 	return query, args
 }
 
+func generateUpdateQuery(query string) (ret string, length int) {
+	split := strings.Split(query, ",")
+	for i, e := range split {
+		ret += fmt.Sprintf("%s = $%d,", e, i+1)
+	}
+	return strings.Trim(ret, ","), len(split)
+}
+
 // QueryBuilderUpdate generates normal update queries for non nested structures
-func QueryBuilderUpdate(i interface{}, tableName string) (string, []interface{}) {
-	t := reflect.TypeOf(i)
-	v := reflect.ValueOf(i)
-
-	var searchBy int
-	query := `UPDATE ` + tableName + " SET "
-	args := make([]interface{}, 0)
-
-	argsCount := 0
-	for i := 0; i < v.NumField(); i++ {
-
-		if ok, _ := isPK(t.Field(i)); ok {
-			searchBy = i
-			continue
-		}
-
-		row := t.Field(i).Tag.Get(helpers.RowStructTag)
-		if row != "" {
-			if argsCount < 1 {
-				query += row + " = $" + strconv.Itoa(i+1)
-			} else {
-				query += " ," + row + " = $" + strconv.Itoa(i+1)
-			}
-			args = append(args, v.Field(i).Interface())
-			argsCount++
-		}
-
-	}
-
-	if len(args) == 0 {
-		return "", nil
-	}
-
-	query += " WHERE " + t.Field(searchBy).Tag.Get(helpers.RowStructTag) + " = $" + strconv.Itoa(argsCount+1)
-	args = append(args, v.Field(searchBy).Interface())
-
-	return query, args
+func QueryBuilderUpdate(i interface{}, schema string, tableName string) (string, []interface{}) {
+	members := getAllMembers(i, "", true)
+	index := 1
+	_, args := getValuesCount(i, &index, members)
+	q, l := generateUpdateQuery(members)
+	tmp, where := getArgsWhere(getSearchBy(i, tableName, false, true), l)
+	args = append(args, tmp...)
+	return fmt.Sprintf("UPDATE %s SET %s %s", schema+"."+tableName, q, where), args
 }
 
 func getInnerJoin(inte interface{}, tableName string) string {
@@ -338,16 +343,8 @@ func getInnerJoin(inte interface{}, tableName string) string {
 
 // QueryBuilderJoin generates get queries for nested structures with inner join support
 func QueryBuilderJoin(inte interface{}, tableName string) (string, []interface{}) {
-	tmpCount, tmpHolder := getSearchBy(inte, tableName, true)
-
-	sorts := getOrderBy(tmpHolder)
-	args, where := getArgsWhere(tmpCount, tmpHolder)
-	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(inte, tableName, true), tableName, getInnerJoin(inte, tableName), where, func() string {
-		if sorts != nil && len(sorts) == 2 {
-			return fmt.Sprintf(" ORDER BY %s %s", sorts[0], sorts[1])
-		}
-		return ""
-	}())
+	args, where := getArgsWhere(getSearchBy(inte, tableName, true, false), 1)
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(inte, tableName, false), tableName, getInnerJoin(inte, tableName), where, getOrderBy(inte))
 	return query, args
 }
 
@@ -359,11 +356,11 @@ func QueryBuilderCount(inte interface{}, tableName string) (string, []interface{
 	var pk string = "*"
 	for i := 0; i < v.NumField(); i++ {
 		if ok, _ := isPK(t.Field(i)); ok {
-			pk = t.Field(i).Tag.Get("row")
+			pk = t.Field(i).Tag.Get(helpers.RowStructTag)
 			break
 		}
 	}
-	args, where := getArgsWhere(getSearchBy(inte, tableName, false))
+	args, where := getArgsWhere(getSearchBy(inte, tableName, false, false), 1)
 
 	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, tableName, where), args
 }
@@ -443,24 +440,17 @@ func GetIntoVar(rows *sql.Rows, dest interface{}) {
 // isTableExist runs migrations if table is non existent
 func isTableExist(schemaName string, tableName string, conn *sql.DB) {
 	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schemaName, tableName)
-
-	if err != nil {
-		helpers.LogError(err.Error())
-		err := database.RunMigrations()
-		if err != nil {
-			helpers.LogError(err.Error())
-		}
-		return
-	}
 	var exists bool
-	for rows.Next() {
-		err := rows.Scan(&exists)
-		if err != nil {
-			helpers.LogError(err.Error())
+	if err != nil {
+		for rows.Next() {
+			err := rows.Scan(&exists)
+			if err != nil {
+				helpers.LogError(err.Error())
+			}
 		}
 	}
 
-	if !exists {
+	if !exists || err != nil {
 		err := database.RunMigrations()
 		if err != nil {
 			helpers.LogError(err.Error())
@@ -494,6 +484,9 @@ func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName stri
 }
 
 func checkEmpty(value reflect.Value) bool {
+	if isInbuiltType(value) {
+		return value.Interface().(inbuiltType).isEmpty()
+	}
 	// Checks int
 	matchedInt, err := regexp.MatchString("int", value.Type().String())
 	if err != nil {
@@ -547,6 +540,18 @@ func getForeignRow(field reflect.StructField) string {
 		return field.Tag.Get("fr")
 	}
 	return field.Tag.Get("row")
+}
+
+func isInbuiltType(v reflect.Value) bool {
+	if _, ok := v.Interface().(inbuiltType); ok && v.Kind() == reflect.Struct {
+		switch v.Interface().(type) {
+		case GeographyPoints:
+			return true
+		case SortBy:
+			return true
+		}
+	}
+	return false
 }
 
 // GetConn returns connection to tables

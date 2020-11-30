@@ -191,11 +191,11 @@ type eventGetReq struct {
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location []float64 `schema:"location" json:"location"`
+	Location models.GeographyPoints `schema:"location" json:"location"`
 
 	// Sort results by [trending_index/ST_XMin(location), ASC/DESC/empty]
 	// in: query
-	SortBy []string `schema:"sortby" json:"sortby"`
+	SortBy models.SortBy `schema:"sortby" json:"sortby"`
 
 	// Get short results
 	// in: query
@@ -301,7 +301,7 @@ type eventPostReq struct {
 	// Location in [Longitude, Latitude]
 	// minItems: 2
 	// maxItems: 2
-	Location []float64 `schema:"location" json:"location"`
+	Location models.GeographyPoints `schema:"location" json:"location"`
 }
 
 //swagger:parameters createEvent

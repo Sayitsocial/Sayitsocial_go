@@ -26,7 +26,7 @@ type Event struct {
 	TypeOfEvent   int64                    `row:"type_of_event" type:"exact" json:"type_of_event"`
 	Category      categories.EventCategory `row:"category" type:"exact" fk:"events.event_category" fr:"generated_id" json:"-"`
 	TrendingIndex int64                    `row:"trending_index" type:"exact" json:"trending_index"`
-	SortBy        []string                 `type:"sort" scan:"ignore" json:"-"`
+	SortBy        models.SortBy            `type:"sort" scan:"ignore" json:"-"`
 	Short         bool                     `scan:"ignore" json:"-"`
 }
 
@@ -77,7 +77,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data Event) error {
-	query, args := models.QueryBuilderCreate(data, schema+"."+tableName)
+	query, args := models.QueryBuilderCreate(data, schema, tableName)
 	helpers.LogInfo(args)
 	var err error
 	if a.trans != nil {
@@ -92,7 +92,7 @@ func (a Model) Create(data Event) error {
 // Searches by the member provided in input struct
 func (a Model) Get(data Event) (event []Event) {
 	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
-	helpers.LogInfo(len(data.SortBy))
+	helpers.LogInfo(query)
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
 		helpers.LogError(err.Error())
@@ -106,6 +106,18 @@ func (a Model) Get(data Event) (event []Event) {
 		}
 	}
 	return
+}
+
+func (a Model) Update(data Event) error {
+	query, args := models.QueryBuilderUpdate(data, schema, tableName)
+	helpers.LogInfo(query)
+	var err error
+	if a.trans != nil {
+		_, err = a.trans.Exec(query, args...)
+	} else {
+		_, err = a.conn.Exec(query, args...)
+	}
+	return err
 }
 
 // Count gets count of rows corresponsing to provided search params

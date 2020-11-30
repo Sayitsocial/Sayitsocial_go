@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 
 	"github.com/google/uuid"
 
@@ -109,8 +107,12 @@ func (f followerReq) PutInDB() error {
 }
 
 func (o orgCreReq) PutInDB() error {
-	if o.Email == "" || o.Password == "" || o.OrgName == "" || o.Owner == "" && len(o.Location) == 2 {
+	if o.Email == "" || o.Password == "" || o.OrgName == "" || o.Owner == "" {
 		return errors.New("No parameters should be empty")
+	}
+
+	if o.Location.Latitude != "" && o.Location.Longitude != "" && o.Location.Radius != "" {
+		return errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 	ctx := context.Background()
 	tx, err := database.GetConn().BeginTx(ctx, nil)
@@ -143,10 +145,7 @@ func (o orgCreReq) PutInDB() error {
 		ContactEmail:   o.Email,
 		Owner:          o.Owner,
 		TypeOfOrg:      int(o.TypeOfOrg),
-		Location: models.GeographyPoints{
-			Longitude: o.Location[0],
-			Latitude:  o.Location[1],
-		},
+		Location:       o.Location,
 	})
 	if err != nil {
 		tx.Rollback()
@@ -176,8 +175,8 @@ func (e eventPostReq) PutInDB() error {
 		return errors.New("Invalid category ID")
 	}
 
-	if len(e.Location) < 2 {
-		return errors.New("Invalid location data")
+	if e.Location.Latitude != "" && e.Location.Longitude != "" && e.Location.Radius != "" {
+		return errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 
 	eventModel := event.Initialize(tx)
@@ -194,10 +193,7 @@ func (e eventPostReq) PutInDB() error {
 			GeneratedID: e.Category,
 		},
 		TypeOfEvent: e.TypeOfEvent,
-		Location: models.GeographyPoints{
-			Longitude: e.Location[0],
-			Latitude:  e.Location[1],
-		},
+		Location:    e.Location,
 	})
 
 	if err != nil {
@@ -229,10 +225,10 @@ func (e eventPostReq) PutInDB() error {
 
 // CastToModel converts request struct to model struct
 func (e eventGetReq) CastToModel() (event.Event, error) {
-	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 && len(e.Location) == 0 {
+	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 {
 		return event.Event{}, errors.New("Requires one parameter")
 	}
-	if len(e.Location) < 3 && len(e.Location) != 0 {
+	if e.Location.Latitude != "" && e.Location.Longitude != "" && e.Location.Radius != "" {
 		return event.Event{}, errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 
@@ -245,24 +241,10 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 			GeneratedID: e.Category,
 		},
 		TypeOfEvent: e.TypeOfEvent,
-		Location: func() models.GeographyPoints {
-			if len(e.Location) < 3 {
-				return models.GeographyPoints{}
-			}
-			return models.GeographyPoints{
-				Longitude: e.Location[0],
-				Latitude:  e.Location[1],
-				Radius:    e.Location[2],
-			}
-		}(),
-		Short: e.Short,
+		Location:    e.Location,
+		Short:       e.Short,
 		// BUG: Gorilla decoder cant parse arrays properly sometimes
-		SortBy: func() []string {
-			if len(e.SortBy) == 1 {
-				return strings.Split(e.SortBy[0], ",")
-			}
-			return e.SortBy
-		}(),
+		SortBy: e.SortBy,
 	}, nil
 }
 
@@ -308,24 +290,10 @@ func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
 		DisplayName:    e.DisplayName,
 		Owner:          e.Owner,
 		TypeOfOrg:      e.TypeOfOrg,
-		Location: func() models.GeographyPoints {
-			if len(e.Location) < 3 {
-				return models.GeographyPoints{}
-			}
-			return models.GeographyPoints{
-				Longitude: e.Location[0],
-				Latitude:  e.Location[1],
-				Radius:    e.Location[2],
-			}
-		}(),
-		Short: e.Short,
+		Location:       e.Location,
+		Short:          e.Short,
 		// BUG: Gorilla decoder cant parse arrays properly sometimes
-		SortBy: func() []string {
-			if len(e.SortBy) == 1 {
-				return strings.Split(e.SortBy[0], ",")
-			}
-			return e.SortBy
-		}(),
+		SortBy: e.SortBy,
 	}, nil
 }
 
