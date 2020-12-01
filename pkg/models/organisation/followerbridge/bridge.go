@@ -3,8 +3,8 @@ package followerbridge
 import (
 	"database/sql"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 )
 
@@ -17,7 +17,7 @@ const (
 type Followers struct {
 	GeneratedID    string          `row:"generated_id" type:"exact" pk:"manual" json:"generated_id"`
 	OrganisationID string          `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
-	Volunteer      voldata.VolData `row:"volunteer_id" type:"exact" fk:"volunteer.volunteer" fr:"volunteer_id" json:"volunteer"`
+	Volunteer      voldata.VolData `row:"volunteer_id" type:"exact" ft:"volunteer.volunteer" fk:"volunteer_id" json:"volunteer"`
 }
 
 type Model struct {
@@ -33,7 +33,7 @@ func Initialize(tx *sql.Tx) *Model {
 		}
 	}
 	return &Model{
-		conn: models.GetConn(schema, tableName),
+		conn: querybuilder.GetConn(schema, tableName),
 	}
 }
 
@@ -48,7 +48,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data Followers) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := querybuilder.QueryBuilderCreate(data, schema, tableName)
 
 	var err error
 	if a.trans != nil {
@@ -62,19 +62,19 @@ func (a Model) Create(data Followers) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(data Followers) (orgData []Followers) {
-	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderJoin(data, schema+"."+tableName)
 	helpers.LogInfo(query)
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
 		helpers.LogError(err.Error())
 		return
 	}
-	models.GetIntoStruct(row, &orgData)
+	querybuilder.GetIntoStruct(row, &orgData)
 	return
 }
 
 func (a Model) Delete(data Followers) error {
-	query, args := models.QueryBuilderDelete(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderDelete(data, schema+"."+tableName)
 	var err error
 	helpers.LogInfo(query)
 	if a.trans != nil {

@@ -33,9 +33,6 @@ const (
 	AuthTypeVol = "vol"
 	AuthTypeOrg = "org"
 
-	RowStructTag = "row"
-	PKStructTag  = "pk"
-
 	UserAlreadyExistsError  = "User already exists"
 	InvalidCredentialsError = "Invalid username or password"
 	InvalidUserTypeError    = "Invalid user type"

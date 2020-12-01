@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
@@ -191,11 +191,11 @@ type eventGetReq struct {
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location models.GeographyPoints `schema:"location" json:"location"`
+	Location querybuilder.GeographyPoints `schema:"location" json:"location"`
 
 	// Sort results by [trending_index/ST_XMin(location), ASC/DESC/empty]
 	// in: query
-	SortBy models.SortBy `schema:"sortby" json:"sortby"`
+	SortBy querybuilder.SortBy `schema:"sortby" json:"sortby"`
 
 	// Get short results
 	// in: query
@@ -208,11 +208,11 @@ type eventGetReq struct {
 
 // swagger:model
 type eventShort struct {
-	EventID       string                 `json:"event_id"`
-	Name          string                 `json:"name"`
-	Location      models.GeographyPoints `json:"location"`
-	TypeOfEvent   int64                  `json:"type_of_event"`
-	TrendingIndex int64                  `json:"trending_index"`
+	EventID       string                       `json:"event_id"`
+	Name          string                       `json:"name"`
+	Location      querybuilder.GeographyPoints `json:"location"`
+	TypeOfEvent   int64                        `json:"type_of_event"`
+	TrendingIndex int64                        `json:"trending_index"`
 }
 
 // swagger:response eventResponse
@@ -305,7 +305,7 @@ type eventPostReq struct {
 	// Location in [Longitude, Latitude]
 	// minItems: 2
 	// maxItems: 2
-	Location models.GeographyPoints `schema:"location" json:"location"`
+	Location querybuilder.GeographyPoints `schema:"location" json:"location"`
 }
 
 //swagger:parameters createEvent

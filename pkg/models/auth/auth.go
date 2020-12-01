@@ -3,8 +3,8 @@ package auth
 import (
 	"database/sql"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -33,7 +33,7 @@ func Initialize(tx *sql.Tx) *Model {
 		}
 	}
 	return &Model{
-		conn: models.GetConn(schema, tableName),
+		conn: querybuilder.GetConn(schema, tableName),
 	}
 }
 
@@ -50,7 +50,7 @@ func (a Model) Close() {
 func (a Model) Create(auth Auth) error {
 	auth.Password = hashPassword(auth.Password)
 
-	query, args := models.QueryBuilderCreate(auth, schema, tableName)
+	query, args := querybuilder.QueryBuilderCreate(auth, schema, tableName)
 
 	var err error
 	if a.trans != nil {
@@ -64,7 +64,7 @@ func (a Model) Create(auth Auth) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(auth Auth) (allAuth []Auth) {
-	query, args := models.QueryBuilderGet(auth, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderGet(auth, schema+"."+tableName)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
@@ -72,7 +72,7 @@ func (a Model) Get(auth Auth) (allAuth []Auth) {
 		return
 	}
 
-	models.GetIntoStruct(row, &allAuth)
+	querybuilder.GetIntoStruct(row, &allAuth)
 	return
 }
 

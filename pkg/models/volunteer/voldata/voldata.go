@@ -3,8 +3,8 @@ package voldata
 import (
 	"database/sql"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 )
 
 const (
@@ -35,7 +35,7 @@ func Initialize(tx *sql.Tx) *Model {
 		}
 	}
 	return &Model{
-		conn: models.GetConn(schema, tableName),
+		conn: querybuilder.GetConn(schema, tableName),
 	}
 }
 
@@ -50,7 +50,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data VolData) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := querybuilder.QueryBuilderCreate(data, schema, tableName)
 
 	var err error
 	if a.trans != nil {
@@ -64,7 +64,7 @@ func (a Model) Create(data VolData) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(data VolData) (volData []VolData) {
-	query, args := models.QueryBuilderGet(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderGet(data, schema+"."+tableName)
 
 	helpers.LogInfo(query)
 
@@ -74,6 +74,6 @@ func (a Model) Get(data VolData) (volData []VolData) {
 		return
 	}
 
-	models.GetIntoStruct(row, &volData)
+	querybuilder.GetIntoStruct(row, &volData)
 	return
 }

@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/categories"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 )
 
 const (
@@ -17,18 +17,18 @@ const (
 
 // swagger:model
 type Event struct {
-	EventID       string                   `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
-	Name          string                   `row:"name" type:"like" json:"name"`
-	Description   string                   `row:"description" type:"like" json:"description,omitempty"`
-	StartTime     int64                    `row:"start_time" type:"exact" json:"start_time,omitempty"`
-	HostTime      int64                    `row:"host_time" type:"exact" json:"host_time,omitempty"`
-	Location      models.GeographyPoints   `row:"location" type:"onlyvalue" json:"location"`
-	TypeOfEvent   int64                    `row:"type_of_event" type:"exact" json:"type_of_event"`
-	Category      categories.EventCategory `row:"category" type:"exact" fk:"events.event_category" fr:"generated_id" json:"-"`
-	TrendingIndex int64                    `row:"trending_index" type:"exact" json:"trending_index"`
-	SortBy        models.SortBy            `type:"sort" json:"-"`
-	Short         bool                     `scan:"ignore" json:"-"`
-	Page          models.Page              `json:"page"`
+	EventID       string                       `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
+	Name          string                       `row:"name" type:"like" json:"name"`
+	Description   string                       `row:"description" type:"like" json:"description,omitempty"`
+	StartTime     int64                        `row:"start_time" type:"exact" json:"start_time,omitempty"`
+	HostTime      int64                        `row:"host_time" type:"exact" json:"host_time,omitempty"`
+	Location      querybuilder.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
+	TypeOfEvent   int64                        `row:"type_of_event" type:"exact" json:"type_of_event"`
+	Category      categories.EventCategory     `row:"category" type:"exact" ft:"events.event_category" fk:"generated_id" json:"-"`
+	TrendingIndex int64                        `row:"trending_index" type:"exact" json:"trending_index"`
+	SortBy        querybuilder.SortBy          `type:"sort" json:"-"`
+	Short         bool                         `scan:"ignore" json:"-"`
+	Page          querybuilder.Page            `json:"page"`
 }
 
 func (e *Event) MarshalJSON() ([]byte, error) {
@@ -63,7 +63,7 @@ func Initialize(tx *sql.Tx) *Model {
 		}
 	}
 	return &Model{
-		conn: models.GetConn(schema, tableName),
+		conn: querybuilder.GetConn(schema, tableName),
 	}
 }
 
@@ -78,7 +78,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data Event) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := querybuilder.QueryBuilderCreate(data, schema, tableName)
 	helpers.LogInfo(args)
 	var err error
 	if a.trans != nil {
@@ -92,7 +92,7 @@ func (a Model) Create(data Event) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(data Event) (event []Event) {
-	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderJoin(data, schema+"."+tableName)
 	helpers.LogInfo(query)
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
@@ -100,7 +100,7 @@ func (a Model) Get(data Event) (event []Event) {
 		return
 	}
 
-	models.GetIntoStruct(row, &event)
+	querybuilder.GetIntoStruct(row, &event)
 	if data.Short {
 		for i := range event {
 			event[i].Short = true
@@ -110,7 +110,7 @@ func (a Model) Get(data Event) (event []Event) {
 }
 
 func (a Model) Update(data Event) error {
-	query, args := models.QueryBuilderUpdate(data, schema, tableName)
+	query, args := querybuilder.QueryBuilderUpdate(data, schema, tableName)
 	helpers.LogInfo(query)
 	var err error
 	if a.trans != nil {
@@ -123,7 +123,7 @@ func (a Model) Update(data Event) error {
 
 // Count gets count of rows corresponsing to provided search params
 func (a Model) Count(data Event) (count []int) {
-	query, args := models.QueryBuilderCount(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderCount(data, schema+"."+tableName)
 	helpers.LogInfo(query)
 
 	row, err := a.conn.Query(query, args...)
@@ -132,6 +132,6 @@ func (a Model) Count(data Event) (count []int) {
 		return
 	}
 
-	models.GetIntoVar(row, &count)
+	querybuilder.GetIntoVar(row, &count)
 	return
 }

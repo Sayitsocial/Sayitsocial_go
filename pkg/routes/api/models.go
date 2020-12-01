@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 
 	"github.com/google/uuid"
 
@@ -246,7 +246,7 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 		Short:       e.Short,
 		// BUG: Gorilla decoder cant parse arrays properly sometimes
 		SortBy: e.SortBy,
-		Page: models.Page{
+		Page: querybuilder.Page{
 			Limit:  helpers.MaxPage,
 			Offset: helpers.MaxPage * e.Page,
 		},

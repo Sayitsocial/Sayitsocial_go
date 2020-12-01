@@ -3,12 +3,12 @@ package eventhost
 import (
 	"database/sql"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 )
 
 const (
@@ -19,9 +19,9 @@ const (
 // swagger:model
 type EventHostBridge struct {
 	GeneratedID  string          `row:"generated_id" type:"exact" pk:"manual" json:"generated_id"`
-	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation" fk:"organisation.organisation" fr:"organisation_id"`
-	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer" fk:"volunteer.volunteer" fr:"volunteer_id"`
-	Event        event.Event     `row:"event_id" type:"exact" json:"event" fk:"events.events" fr:"event_id"`
+	Organisation orgdata.OrgData `row:"organisation_id" type:"exact" json:"organisation" ft:"organisation.organisation" fk:"organisation_id"`
+	Volunteer    voldata.VolData `row:"volunteer_id" type:"exact" json:"volunteer" ft:"volunteer.volunteer" fk:"volunteer_id"`
+	Event        event.Event     `row:"event_id" type:"exact" json:"event" ft:"events.events" fk:"event_id"`
 }
 
 type Model struct {
@@ -37,7 +37,7 @@ func Initialize(tx *sql.Tx) *Model {
 		}
 	}
 	return &Model{
-		conn: models.GetConn(schema, tableName),
+		conn: querybuilder.GetConn(schema, tableName),
 	}
 }
 
@@ -52,7 +52,7 @@ func (a Model) Close() {
 
 // Create creates a value in database
 func (a Model) Create(data EventHostBridge) error {
-	query, args := models.QueryBuilderCreate(data, schema, tableName)
+	query, args := querybuilder.QueryBuilderCreate(data, schema, tableName)
 
 	var err error
 	if a.trans != nil {
@@ -66,7 +66,7 @@ func (a Model) Create(data EventHostBridge) error {
 // Get data from db into slice of struct
 // Searches by the member provided in input struct
 func (a Model) Get(data EventHostBridge) (eventHostBridge []EventHostBridge) {
-	query, args := models.QueryBuilderJoin(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderJoin(data, schema+"."+tableName)
 	helpers.LogInfo(query)
 
 	row, err := a.conn.Query(query, args...)
@@ -74,13 +74,13 @@ func (a Model) Get(data EventHostBridge) (eventHostBridge []EventHostBridge) {
 		helpers.LogError(err.Error())
 		return
 	}
-	models.GetIntoStruct(row, &eventHostBridge)
+	querybuilder.GetIntoStruct(row, &eventHostBridge)
 	return
 }
 
 // Count gets count of rows corresponsing to provided search params
 func (a Model) Count(data EventHostBridge) (count []int) {
-	query, args := models.QueryBuilderCount(data, schema+"."+tableName)
+	query, args := querybuilder.QueryBuilderCount(data, schema+"."+tableName)
 
 	row, err := a.conn.Query(query, args...)
 	if err != nil {
@@ -88,6 +88,6 @@ func (a Model) Count(data EventHostBridge) (count []int) {
 		return
 	}
 
-	models.GetIntoVar(row, &count)
+	querybuilder.GetIntoVar(row, &count)
 	return
 }
