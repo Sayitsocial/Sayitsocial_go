@@ -6,7 +6,7 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
@@ -136,7 +136,7 @@ type orgDataShort struct {
 
 // swagger:response orgResponse
 type orgResponse struct {
-	org orgdata.OrgData
+	org models.OrgData
 }
 
 // This response will be returned if "short" is true
@@ -183,10 +183,16 @@ func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := orgdata.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.OrgData))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)

@@ -6,9 +6,7 @@ import (
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
@@ -37,7 +35,7 @@ type eventHostReq struct {
 // swagger:response eventHostResponse
 type eventHostResp struct {
 	// in: query
-	eventHost eventhost.EventHostBridge
+	eventHost models.EventHostBridge
 }
 
 // swagger:route GET /api/event/host event getEventHost
@@ -76,10 +74,16 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := eventhost.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.EventHostBridge))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -108,7 +112,7 @@ type eventAttendeeReq struct {
 // swagger:response eventAttendeeResponse
 type eventAttendeeResponse struct {
 	// in: query
-	eventAttendee eventattendee.EventAttendeeBridge
+	eventAttendee models.EventAttendeeBridge
 }
 
 // swagger:route GET /api/event/attendee event getEventAttendee
@@ -147,10 +151,16 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := eventattendee.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.EventAttendeeBridge))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -218,7 +228,7 @@ type eventShort struct {
 // swagger:response eventResponse
 type eventResponse struct {
 	// in: query
-	event event.Event
+	event models.Event
 }
 
 // This response will be returned if "short" is true
@@ -268,9 +278,15 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := event.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.Event))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -335,7 +351,7 @@ type eventPostModel struct {
 //     Responses:
 //       200: successResponse
 func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
-	model := event.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
 	var req eventPostReq

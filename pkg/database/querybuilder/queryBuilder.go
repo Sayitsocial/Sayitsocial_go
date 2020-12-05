@@ -6,33 +6,31 @@ package querybuilder
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 )
 
-// QueryBuilderGet generates normal get queries for non nested structures
-func QueryBuilderGet(i interface{}, tableName string) (string, []interface{}) {
+// queryBuilderGet generates normal get queries for non nested structures
+func queryBuilderGet(i interface{}, schema string, tableName string) (string, []interface{}) {
 	args, where := getArgsWhere(getSearchBy(i, tableName, true, false), 1)
-	return fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(i, tableName, false), tableName, where, getOrderBy(i), getLimit(i)), args
+	return fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(i, schema+"."+tableName, false), schema+"."+tableName, where, getOrderBy(i), getLimit(i)), args
 }
 
-// QueryBuilderCreate generates normal create queries for non nested structures
-func QueryBuilderCreate(i interface{}, schema string, tableName string) (string, []interface{}) {
+// queryBuilderCreate generates normal create queries for non nested structures
+func queryBuilderCreate(i interface{}, schema string, tableName string) (string, []interface{}) {
 	members := getAllMembers(i, "", true)
 	index := 1
 	values, args := getValuesCount(i, &index, members)
 	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", schema+"."+tableName, members, values), args
 }
 
-// QueryBuilderDelete generates normal delete queries for non nested structures
-func QueryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
+// queryBuilderDelete generates normal delete queries for non nested structures
+func queryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
 	args, q := getArgsWhere(getSearchBy(i, tableName, false, false), 1)
 	query := fmt.Sprintf("DELETE FROM %s %s", tableName, q)
 	return query, args
 }
 
-// QueryBuilderUpdate generates normal update queries for non nested structures
-func QueryBuilderUpdate(i interface{}, schema string, tableName string) (string, []interface{}) {
+// queryBuilderUpdate generates normal update queries for non nested structures
+func queryBuilderUpdate(i interface{}, schema string, tableName string) (string, []interface{}) {
 	members := getAllMembers(i, "", true)
 	index := 1
 	_, args := getValuesCount(i, &index, members)
@@ -42,16 +40,15 @@ func QueryBuilderUpdate(i interface{}, schema string, tableName string) (string,
 	return fmt.Sprintf("UPDATE %s SET %s %s", schema+"."+tableName, q, where), args
 }
 
-// QueryBuilderJoin generates get queries for nested structures with inner join support
-func QueryBuilderJoin(inte interface{}, tableName string) (string, []interface{}) {
-	args, where := getArgsWhere(getSearchBy(inte, tableName, true, false), 1)
-	helpers.LogInfo(getLimit(inte))
-	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s", getAllMembers(inte, tableName, false), tableName, getInnerJoin(inte, tableName), where, getOrderBy(inte), getLimit(inte))
+// queryBuilderJoin generates get queries for nested structures with inner join support
+func queryBuilderJoin(inte interface{}, schema string, tableName string) (string, []interface{}) {
+	args, where := getArgsWhere(getSearchBy(inte, tableName, true, false), 0)
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s", getAllMembers(inte, schema+"."+tableName, false), schema+"."+tableName, getInnerJoin(inte, tableName), where, getOrderBy(inte), getLimit(inte))
 	return query, args
 }
 
-// QueryBuilderCount generates count queries for primary key in structure
-func QueryBuilderCount(inte interface{}, tableName string) (string, []interface{}) {
+// queryBuilderCount generates count queries for primary key in structure
+func queryBuilderCount(inte interface{}, schema string, tableName string) (string, []interface{}) {
 	t := reflect.TypeOf(inte)
 	v := reflect.ValueOf(inte)
 
@@ -62,7 +59,7 @@ func QueryBuilderCount(inte interface{}, tableName string) (string, []interface{
 			break
 		}
 	}
-	args, where := getArgsWhere(getSearchBy(inte, tableName, false, false), 1)
+	args, where := getArgsWhere(getSearchBy(inte, schema+"."+tableName, false, false), 1)
 
-	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, tableName, where), args
+	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, schema+"."+tableName, where), args
 }

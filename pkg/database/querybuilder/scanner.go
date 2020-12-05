@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"database/sql"
+	"fmt"
 	"reflect"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
@@ -27,18 +28,16 @@ func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
 }
 
 // GetIntoStruct scans rows into slice of struct
-func GetIntoStruct(rows *sql.Rows, dest interface{}) {
+func GetIntoStruct(rows *sql.Rows, dest interface{}) error {
 	v := reflect.ValueOf(dest)
 	direct := reflect.Indirect(v)
 
+	helpers.LogInfo(v.Kind())
 	if v.Kind() != reflect.Ptr {
-		helpers.LogError("Destination not pointer")
-		return
+		return fmt.Errorf("Destination not pointer")
 	}
-
 	if direct.Kind() != reflect.Slice {
-		helpers.LogError("Destination not slice")
-		return
+		return fmt.Errorf("Destination not slice")
 	}
 
 	base := v.Elem().Type().Elem()
@@ -52,22 +51,23 @@ func GetIntoStruct(rows *sql.Rows, dest interface{}) {
 
 		err := rows.Scan(ptrs...)
 		if err != nil {
-			helpers.LogError(err.Error())
+			return err
 		}
 
 		direct.Set(reflect.Append(direct, reflect.Indirect(vp)))
 	}
+	return nil
 }
 
 // GetIntoVar scans row into slice of single variable
-func GetIntoVar(rows *sql.Rows, dest interface{}) {
+func GetIntoVar(rows *sql.Rows, dest interface{}) error {
 	v := reflect.ValueOf(dest)
 	direct := reflect.Indirect(v)
 	base := v.Elem().Type().Elem()
 
 	if v.Kind() != reflect.Ptr {
-		helpers.LogError("Destination not pointer")
-		return
+		return fmt.Errorf("Destination not pointer")
+
 	}
 
 	for rows.Next() {
@@ -75,9 +75,10 @@ func GetIntoVar(rows *sql.Rows, dest interface{}) {
 		vpInd := vp.Elem()
 		err := rows.Scan(vpInd.Addr().Interface())
 		if err != nil {
-			helpers.LogError(err.Error())
+			return err
 		}
 
 		direct.Set(reflect.Append(direct, reflect.Indirect(vp)))
 	}
+	return nil
 }

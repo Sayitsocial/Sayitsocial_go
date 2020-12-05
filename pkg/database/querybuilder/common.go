@@ -48,24 +48,25 @@ type inbuiltType interface {
 }
 
 // isTableExist runs migrations if table is non existent
-func isTableExist(schemaName string, tableName string, conn *sql.DB) {
-	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schemaName, tableName)
+func isTableExist(conn *sql.DB, schema string, table string) error {
+	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schema, table)
 	var exists bool
 	if err != nil {
 		for rows.Next() {
 			err := rows.Scan(&exists)
 			if err != nil {
-				helpers.LogError(err.Error())
+				return err
 			}
 		}
 	}
 
-	if !exists || err != nil {
+	if !exists {
 		err := database.RunMigrations()
 		if err != nil {
-			helpers.LogError(err.Error())
+			return err
 		}
 	}
+	return nil
 }
 
 // IsValueExists checks if value exists in table
@@ -159,10 +160,8 @@ func isInbuiltType(v reflect.Value) bool {
 
 // GetConn returns connection to tables
 // Also check if table exists
-func GetConn(schema string, table string) *sql.DB {
-	conn := database.GetConn()
-	isTableExist(schema, table, conn)
-	return conn
+func GetConn() *sql.DB {
+	return database.GetConn()
 }
 
 func getAllMembers(inte interface{}, tableName string, isCreate bool) string {
@@ -187,6 +186,7 @@ func getAllMembers(inte interface{}, tableName string, isCreate bool) string {
 				}
 				if !isCreate {
 					if foreignTable := t.Field(i).Tag.Get(ForeignTable); foreignTable != "" {
+						helpers.LogInfo(foreignTable)
 						ret += getAllMembers(v.Field(i).Interface(), foreignTable, isCreate)
 						continue
 					}

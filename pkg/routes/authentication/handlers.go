@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -288,10 +289,18 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // Validate user from hashes password
 func isUserValid(username string, password string) (bool, string) {
-	model := auth.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
-	fetchUsers := model.Get(auth.Auth{Username: username})
+	x, err := model.Get(models.Auth{
+		Username: username,
+	})
+	if err != nil {
+		helpers.LogError(err.Error())
+		return false, ""
+	}
+
+	fetchUsers := *x.(*[]models.Auth)
 	if len(fetchUsers) > 0 {
 		hashedPass := fetchUsers[0].Password
 		if hashedPass != "" {
@@ -321,10 +330,15 @@ func ValidateSession(w http.ResponseWriter, r *http.Request) bool {
 	val := session.Values[helpers.UsernameKey]
 
 	if val != nil {
-		model := auth.Initialize(nil)
+		model := querybuilder.Initialize(nil)
 		defer model.Close()
 
-		user := model.Get(auth.Auth{Username: val.(string)})
+		x, err := model.Get(models.Auth{Username: val.(string)})
+		if err != nil {
+			helpers.LogError(err.Error())
+			return false
+		}
+		user := *x.(*[]models.Auth)
 		if len(user) > 0 {
 			if user[0].Username == val {
 				session.Options.MaxAge = 30 * 60
@@ -369,7 +383,7 @@ func GetUsernameFromSession(r *http.Request) string {
 //	if session.IsNew {
 //		return false
 //	}
-//	model := authvol.Initialize()
+//	model := querybuilder.Initialize()
 //	defer model.Close()
 //
 //	user := model.Get(authvol.AuthVol{Username: session.Values[helpers.UsernameKey].(string)})

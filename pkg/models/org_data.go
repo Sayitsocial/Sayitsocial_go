@@ -1,16 +1,10 @@
-package orgdata
+package models
 
 import (
-	"database/sql"
 	"encoding/json"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-)
-
-const (
-	tableName = "organisation"
-	schema    = helpers.DbSchemaOrg
 )
 
 // OrgData is a model to store data about an organisation
@@ -31,10 +25,8 @@ type OrgData struct {
 	Short          bool                         `scan:"ignore" json:"-"`
 }
 
-// Model to hold connection details
-type Model struct {
-	trans *sql.Tx
-	conn  *sql.DB
+func (OrgData) OrgData() (string, string) {
+	return helpers.DbSchemaOrg, "organisation"
 }
 
 // MarshalJSON is responsible for custom marshaling struct to json
@@ -55,57 +47,4 @@ func (o *OrgData) MarshalJSON() ([]byte, error) {
 	}{
 		(*tmp)(o),
 	})
-}
-
-// Initialize returns model of db with active connection
-func Initialize(tx *sql.Tx) *Model {
-	if tx != nil {
-		return &Model{
-			trans: tx,
-		}
-	}
-	return &Model{
-		conn: querybuilder.GetConn(schema, tableName),
-	}
-}
-
-// Close closes the connection to db
-// Model should not be used after close is called
-func (a Model) Close() {
-	err := a.conn.Close()
-	if err != nil {
-		helpers.LogError(err.Error())
-	}
-}
-
-// Create creates a value in database
-func (a Model) Create(data OrgData) error {
-	query, args := querybuilder.QueryBuilderCreate(data, schema, tableName)
-
-	var err error
-	if a.trans != nil {
-		_, err = a.trans.Exec(query, args...)
-	} else {
-		_, err = a.conn.Exec(query, args...)
-	}
-	return err
-}
-
-// Get data from db into slice of struct
-// Searches by the member provided in input struct
-func (a Model) Get(data OrgData) (orgData []OrgData) {
-	query, args := querybuilder.QueryBuilderGet(data, schema+"."+tableName)
-	helpers.LogInfo(query)
-	row, err := a.conn.Query(query, args...)
-	if err != nil {
-		helpers.LogError(err.Error())
-		return
-	}
-	querybuilder.GetIntoStruct(row, &orgData)
-	if data.Short {
-		for i := range orgData {
-			orgData[i].Short = true
-		}
-	}
-	return
 }

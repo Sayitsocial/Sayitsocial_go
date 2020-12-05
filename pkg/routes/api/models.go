@@ -12,17 +12,9 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 
 	"github.com/google/uuid"
-
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/auth"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/categories"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/followerbridge"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
 )
 
 // enums for org types
@@ -57,11 +49,11 @@ func (u volCreReq) PutInDB() error {
 		return err
 	}
 
-	modelAuth := auth.Initialize(tx)
+	modelAuth := querybuilder.Initialize(tx)
 
 	uid := uuid.New().String()
 
-	err = modelAuth.Create(auth.Auth{
+	err = modelAuth.Create(models.Auth{
 		UID:        uid,
 		Username:   u.Email,
 		Password:   u.Password,
@@ -76,9 +68,9 @@ func (u volCreReq) PutInDB() error {
 	helpers.LogInfo(u.FirstName)
 	helpers.LogInfo(u.LastName)
 
-	modelData := voldata.Initialize(tx)
+	modelData := querybuilder.Initialize(tx)
 
-	err = modelData.Create(voldata.VolData{
+	err = modelData.Create(models.VolData{
 		VolunteerID:  uid,
 		DisplayName:  fmt.Sprintf("%s %s", u.FirstName, u.LastName),
 		ContactEmail: u.Email,
@@ -94,13 +86,13 @@ func (f followerReq) PutInDB() error {
 	if f.OrganisationID == "" || f.VolunteerID == "" {
 		return errors.New("No parameters should be empty")
 	}
-	model := followerbridge.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 	uid := uuid.New().String()
-	err := model.Create(followerbridge.Followers{
+	err := model.Create(models.Followers{
 		GeneratedID:    uid,
 		OrganisationID: f.OrganisationID,
-		Volunteer: voldata.VolData{
+		Volunteer: models.VolData{
 			VolunteerID: f.VolunteerID,
 		},
 	})
@@ -121,11 +113,11 @@ func (o orgCreReq) PutInDB() error {
 		return err
 	}
 
-	modelAuth := auth.Initialize(tx)
+	modelAuth := querybuilder.Initialize(tx)
 
 	uid := uuid.New().String()
 
-	err = modelAuth.Create(auth.Auth{
+	err = modelAuth.Create(models.Auth{
 		UID:        uid,
 		Username:   o.Email,
 		Password:   o.Password,
@@ -137,9 +129,9 @@ func (o orgCreReq) PutInDB() error {
 		return err
 	}
 
-	modelData := orgdata.Initialize(tx)
+	modelData := querybuilder.Initialize(tx)
 
-	err = modelData.Create(orgdata.OrgData{
+	err = modelData.Create(models.OrgData{
 		OrganisationID: uid,
 		DisplayName:    o.OrgName,
 		RegistrationNo: o.RegistrationNo,
@@ -166,13 +158,19 @@ func (e eventPostReq) PutInDB() error {
 		return err
 	}
 
-	categoryModel := categories.Initialize(nil)
+	categoryModel := querybuilder.Initialize(nil)
 	defer categoryModel.Close()
 
 	// TODO: Use count here
-	if len(categoryModel.Get(categories.EventCategory{
+	x, err := categoryModel.Get(models.EventCategory{
 		GeneratedID: e.Category,
-	})) == 0 {
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if len(*x.(*[]models.EventCategory)) == 0 {
 		return errors.New("Invalid category ID")
 	}
 
@@ -180,17 +178,17 @@ func (e eventPostReq) PutInDB() error {
 		return errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 
-	eventModel := event.Initialize(tx)
+	eventModel := querybuilder.Initialize(tx)
 
 	eventID := uuid.New().String()
 
-	err = eventModel.Create(event.Event{
+	err = eventModel.Create(models.Event{
 		EventID:     eventID,
 		Name:        e.Name,
 		Description: e.Description,
 		StartTime:   e.StartTime,
 		HostTime:    time.Now().Unix(),
-		Category: categories.EventCategory{
+		Category: models.EventCategory{
 			GeneratedID: e.Category,
 		},
 		TypeOfEvent: e.TypeOfEvent,
@@ -202,17 +200,17 @@ func (e eventPostReq) PutInDB() error {
 		return err
 	}
 
-	eventHostBridgeModel := eventhost.Initialize(tx)
+	eventHostBridgeModel := querybuilder.Initialize(tx)
 
-	err = eventHostBridgeModel.Create(eventhost.EventHostBridge{
+	err = eventHostBridgeModel.Create(models.EventHostBridge{
 		GeneratedID: uuid.New().String(),
-		Organisation: orgdata.OrgData{
+		Organisation: models.OrgData{
 			OrganisationID: e.OrganisationID,
 		},
-		Volunteer: voldata.VolData{
+		Volunteer: models.VolData{
 			VolunteerID: e.VolunteerID,
 		},
-		Event: event.Event{
+		Event: models.Event{
 			EventID: eventID,
 		},
 	})
@@ -225,20 +223,20 @@ func (e eventPostReq) PutInDB() error {
 }
 
 // CastToModel converts request struct to model struct
-func (e eventGetReq) CastToModel() (event.Event, error) {
+func (e eventGetReq) CastToModel() (models.Event, error) {
 	if e.EventID == "" && e.Name == "" && e.Category == 0 && e.StartTime == 0 && e.HostTime == 0 {
-		return event.Event{}, errors.New("Requires one parameter")
+		return models.Event{}, errors.New("Requires one parameter")
 	}
 	if e.Location.Latitude != "" && e.Location.Longitude != "" && e.Location.Radius != "" {
-		return event.Event{}, errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
+		return models.Event{}, errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 
-	return event.Event{
+	return models.Event{
 		EventID:   e.EventID,
 		Name:      e.Name,
 		HostTime:  e.HostTime,
 		StartTime: e.StartTime,
-		Category: categories.EventCategory{
+		Category: models.EventCategory{
 			GeneratedID: e.Category,
 		},
 		TypeOfEvent: e.TypeOfEvent,
@@ -254,43 +252,43 @@ func (e eventGetReq) CastToModel() (event.Event, error) {
 }
 
 // CastToModel converts request struct to model struct
-func (e eventHostReq) CastToModel() (eventhost.EventHostBridge, error) {
+func (e eventHostReq) CastToModel() (models.EventHostBridge, error) {
 	if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" && e.EventID == "" {
-		return eventhost.EventHostBridge{}, errors.New("Requires one parameter")
+		return models.EventHostBridge{}, errors.New("Requires one parameter")
 	}
-	return eventhost.EventHostBridge{
+	return models.EventHostBridge{
 		GeneratedID: e.GeneratedID,
-		Organisation: orgdata.OrgData{
+		Organisation: models.OrgData{
 			OrganisationID: e.OrganisationID,
 		},
-		Volunteer: voldata.VolData{
+		Volunteer: models.VolData{
 			VolunteerID: e.VolunteerID,
 		},
-		Event: event.Event{
+		Event: models.Event{
 			EventID: e.EventID,
 		},
 	}, nil
 }
 
 // CastToModel converts request struct to model struct
-func (e eventAttendeeReq) CastToModel() (eventattendee.EventAttendeeBridge, error) {
+func (e eventAttendeeReq) CastToModel() (models.EventAttendeeBridge, error) {
 	if e.GeneratedID == "" && e.VolunteerID == "" && e.EventID == "" {
-		return eventattendee.EventAttendeeBridge{}, errors.New("Requires one parameter")
+		return models.EventAttendeeBridge{}, errors.New("Requires one parameter")
 	}
-	return eventattendee.EventAttendeeBridge{
+	return models.EventAttendeeBridge{
 		GeneratedID: e.GeneratedID,
-		Volunteer: voldata.VolData{
+		Volunteer: models.VolData{
 			VolunteerID: e.VolunteerID,
 		},
-		Event: event.Event{
+		Event: models.Event{
 			EventID: e.EventID,
 		},
 	}, nil
 }
 
 // CastToModel converts request struct to model struct
-func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
-	return orgdata.OrgData{
+func (e orgGetReq) CastToModel() (models.OrgData, error) {
+	return models.OrgData{
 		OrganisationID: e.OrganisationID,
 		DisplayName:    e.DisplayName,
 		Owner:          e.Owner,
@@ -303,8 +301,8 @@ func (e orgGetReq) CastToModel() (orgdata.OrgData, error) {
 }
 
 // CastToModel converts request struct to model struct
-func (e volGetReq) CastToModel() (voldata.VolData, error) {
-	return voldata.VolData{
+func (e volGetReq) CastToModel() (models.VolData, error) {
+	return models.VolData{
 		VolunteerID: e.VolunteerID,
 		DisplayName: e.DisplayName,
 	}, nil
@@ -315,12 +313,12 @@ func (f followerReq) RemoveFromDB() error {
 		return errors.New("All parameters are required")
 	}
 
-	model := followerbridge.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
-	return model.Delete(followerbridge.Followers{
+	return model.Delete(models.Followers{
 		OrganisationID: f.OrganisationID,
-		Volunteer: voldata.VolData{
+		Volunteer: models.VolData{
 			VolunteerID: f.VolunteerID,
 		},
 	})

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/volunteer/voldata"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
@@ -93,7 +93,7 @@ type volGetReq struct {
 
 // swagger:response volResponse
 type volResponse struct {
-	vol voldata.VolData
+	vol models.VolData
 }
 
 // swagger:route GET /api/vol/get volunteer getVolunteer
@@ -132,10 +132,16 @@ func volGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := orgdata.Initialize(nil)
+	model := querybuilder.Initialize(nil)
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.VolData))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
