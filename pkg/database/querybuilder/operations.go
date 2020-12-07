@@ -64,82 +64,62 @@ func InitializeWithConn(c *sql.DB) Conn {
 	}
 }
 
-func (c Conn) Get(i interface{}) (interface{}, error) {
+func (c Conn) queryMethod(i interface{}, method func(interface{}, string, string) (string, []interface{})) (*sql.Rows, error) {
 	if val, ok := i.(Model); ok {
 		schema, table := val.GetTableName()
 		isTableExist(c.conn, schema, table)
 
-		query, args := queryBuilderJoin(i, schema, table)
+		query, args := method(i, schema, table)
 		row, err := c.conn.Query(query, args...)
 		if err != nil {
 			return nil, err
 		}
-
-		s := getSlicePtr(i)
-		err = GetIntoStruct(row, s)
-		return s, err
+		return row, nil
 	}
 	return nil, fmt.Errorf("Provided interface is not of type 'Model'")
+}
+
+func (c Conn) Get(i interface{}) (interface{}, error) {
+	s := getSlicePtr(i)
+	row, err := c.queryMethod(i, queryBuilderJoin)
+	if err != nil {
+		return s, err
+	}
+	return s, GetIntoStruct(row, s)
 }
 
 func (c Conn) Create(i interface{}) error {
-	if val, ok := i.(Model); ok {
-		schema, table := val.GetTableName()
-		isTableExist(c.conn, schema, table)
-
-		query, args := queryBuilderCreate(i, schema, table)
-		_, err := c.conn.Query(query, args...)
-		if err != nil {
-			return err
-		}
+	_, err := c.queryMethod(i, queryBuilderCreate)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("Provided interface is not of type 'Model'")
+
+	return nil
 }
 
 func (c Conn) Delete(i interface{}) error {
-	if val, ok := i.(Model); ok {
-		schema, table := val.GetTableName()
-		isTableExist(c.conn, schema, table)
-
-		query, args := queryBuilderDelete(i, schema, table)
-		_, err := c.conn.Query(query, args...)
-		if err != nil {
-			return err
-		}
+	_, err := c.queryMethod(i, queryBuilderDelete)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("Provided interface is not of type 'Model'")
+	return nil
 }
 
 func (c Conn) Update(i interface{}) error {
-	if val, ok := i.(Model); ok {
-		schema, table := val.GetTableName()
-		isTableExist(c.conn, schema, table)
-
-		query, args := queryBuilderUpdate(i, schema, table)
-		_, err := c.conn.Query(query, args...)
-		if err != nil {
-			return err
-		}
+	_, err := c.queryMethod(i, queryBuilderUpdate)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("Provided interface is not of type 'Model'")
+	return nil
 }
 
 func (c Conn) Count(i interface{}) ([]int, error) {
-	if val, ok := i.(Model); ok {
-		schema, table := val.GetTableName()
-		isTableExist(c.conn, schema, table)
-
-		query, args := queryBuilderCount(i, schema, table)
-		row, err := c.conn.Query(query, args...)
-		if err != nil {
-			return nil, err
-		}
-
-		s := make([]int, 0)
-		err = GetIntoVar(row, s)
+	s := make([]int, 0)
+	row, err := c.queryMethod(i, queryBuilderJoin)
+	if err != nil {
 		return s, err
 	}
-	return nil, fmt.Errorf("Provided interface is not of type 'Model'")
+	return s, GetIntoVar(row, s)
 }
 
 func (c Conn) Close() error {
