@@ -8,12 +8,6 @@ import (
 	"reflect"
 )
 
-// queryBuilderGet generates normal get queries for non nested structures
-func queryBuilderGet(i interface{}, schema string, tableName string) (string, []interface{}) {
-	args, where := getArgsWhere(getSearchBy(i, tableName, true, false), 1)
-	return fmt.Sprintf("SELECT %s FROM %s %s %s %s", getAllMembers(i, schema+"."+tableName, false), schema+"."+tableName, where, getOrderBy(i), getLimit(i)), args
-}
-
 // queryBuilderCreate generates normal create queries for non nested structures
 func queryBuilderCreate(i interface{}, schema string, tableName string) (string, []interface{}) {
 	members := getAllMembers(i, "", true)
