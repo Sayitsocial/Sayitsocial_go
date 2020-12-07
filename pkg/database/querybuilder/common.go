@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 )
 
 const (
@@ -49,7 +48,7 @@ type inbuiltType interface {
 
 // isTableExist runs migrations if table is non existent
 func isTableExist(conn *sql.DB, schema string, table string) error {
-	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = $1 AND tablename  = $2);`, schema, table)
+	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname=$1 AND tablename =$2);`, schema, table)
 	var exists bool
 	if err != nil {
 		for rows.Next() {
@@ -75,7 +74,6 @@ func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName stri
 	rows, err := conn.Query(fmt.Sprintf(`SELECT generated_id FROM %s WHERE  %s=?`, tableName, keyname), key)
 
 	if err != nil {
-		helpers.LogError(err.Error())
 		return false, -1
 	}
 
@@ -83,7 +81,7 @@ func IsValueExists(conn *sql.DB, key interface{}, keyname string, tableName stri
 	for rows.Next() {
 		err := rows.Scan(&genID)
 		if err != nil {
-			helpers.LogError(err.Error())
+			return false, -1
 		}
 	}
 
@@ -98,10 +96,18 @@ func checkEmpty(value reflect.Value) bool {
 	if isInbuiltType(value) {
 		return value.Interface().(inbuiltType).isEmpty()
 	}
+
+	if value.Kind() == reflect.Struct {
+		for i := 0; i < value.NumField(); i++ {
+			if !checkEmpty(value.Field(i)) {
+				return false
+			}
+		}
+		return true
+	}
 	// Checks int
 	matchedInt, err := regexp.MatchString(RegexInt, value.Type().String())
 	if err != nil {
-		helpers.LogError(err.Error())
 		return false
 	}
 	if matchedInt {
@@ -111,7 +117,6 @@ func checkEmpty(value reflect.Value) bool {
 	// else check string
 	matchedString, err := regexp.MatchString(RegexStr, value.Type().String())
 	if err != nil {
-		helpers.LogError(err.Error())
 		return false
 	}
 	if matchedString {
@@ -121,7 +126,6 @@ func checkEmpty(value reflect.Value) bool {
 	// else check bool
 	matchedBool, err := regexp.MatchString(RegexBool, value.Type().String())
 	if err != nil {
-		helpers.LogError(err.Error())
 		return false
 	}
 	if matchedBool {
@@ -186,7 +190,6 @@ func getAllMembers(inte interface{}, tableName string, isCreate bool) string {
 				}
 				if !isCreate {
 					if foreignTable := t.Field(i).Tag.Get(ForeignTable); foreignTable != "" {
-						helpers.LogInfo(foreignTable)
 						ret += getAllMembers(v.Field(i).Interface(), foreignTable, isCreate)
 						continue
 					}
@@ -229,32 +232,34 @@ func getSearchBy(inte interface{}, tableName string, appendTableName bool, force
 			}
 		}
 		if v.Field(i).Kind() == reflect.Struct {
-			if appendTableName {
-				if isInbuiltType(v.Field(i)) && !checkEmpty(v.Field(i)) {
-					searchBy = append(searchBy, v.Field(i).Interface().(inbuiltType).whereQuery(tableName, t.Field(i).Tag.Get(Row)))
+			if !checkEmpty(v.Field(i)) {
+				if appendTableName {
+					if isInbuiltType(v.Field(i)) {
+						searchBy = append(searchBy, v.Field(i).Interface().(inbuiltType).whereQuery(tableName, t.Field(i).Tag.Get(Row)))
+						continue
+					}
+					var tmpSearchBy []tmpHolder
+					switch foreignTable := t.Field(i).Tag.Get(ForeignTable); foreignTable {
+					case "":
+						tmpSearchBy = getSearchBy(v.Field(i).Interface(), foreignTable, appendTableName, forcePK)
+						break
+					default:
+						tmpSearchBy = getSearchBy(v.Field(i).Interface(), tableName, appendTableName, true)
+						break
+					}
+					searchBy = append(searchBy, tmpSearchBy...)
+
 					continue
 				}
-				var tmpSearchBy []tmpHolder
-				switch foreignTable := t.Field(i).Tag.Get(ForeignTable); foreignTable {
-				case "":
-					tmpSearchBy = getSearchBy(v.Field(i).Interface(), foreignTable, appendTableName, forcePK)
-					break
-				default:
-					tmpSearchBy = getSearchBy(v.Field(i).Interface(), tableName, appendTableName, forcePK)
-					break
-				}
-				searchBy = append(searchBy, tmpSearchBy...)
-
-				continue
 			}
 		}
 		if val := t.Field(i).Tag.Get(TypeOfSearch); val != "" && !checkEmpty(v.Field(i)) {
 			searchBy = append(searchBy, tmpHolder{
 				name: func() string {
 					if !appendTableName {
-						return fmt.Sprintf("%s ", t.Field(i).Tag.Get(Row))
+						return fmt.Sprintf("%s", t.Field(i).Tag.Get(Row))
 					}
-					return fmt.Sprintf("%s.%s ", tableName, t.Field(i).Tag.Get(Row))
+					return fmt.Sprintf("%s.%s", tableName, t.Field(i).Tag.Get(Row))
 				}(),
 				typeOf: val,
 				value:  v.Field(i),
@@ -270,22 +275,23 @@ func getArgsWhere(searchBy []tmpHolder, index int) ([]interface{}, string) {
 	if len(searchBy) == 0 {
 		return nil, ""
 	}
-	query := " WHERE "
-	for _, r := range searchBy {
+	query := "WHERE "
+	for i, r := range searchBy {
 		if r.name != "" && r.name != " " {
 			if r.typeOf == "exact" {
-				query += fmt.Sprintf("%v = $%d", r.name, index+1)
+				query += fmt.Sprintf("%v=$%d", r.name, index+1)
 			} else if r.typeOf == "like" {
 				query += fmt.Sprintf("%v ILIKE $%d", r.name, index+1)
 			} else if r.typeOf == "onlyname" {
 				query += fmt.Sprintf("%v", r.name)
 			}
-			if index < len(searchBy)-1 {
+			if i < len(searchBy)-1 {
 				query += " AND "
 			}
 			if r.typeOf != "onlyname" {
 				args = append(args, r.value.Interface())
 			}
+			index++
 		}
 	}
 	return args, strings.TrimSuffix(query, "AND ")
@@ -370,7 +376,7 @@ func getValuesCount(inte interface{}, index *int, message string) (ret string, a
 func generateUpdateQuery(query string) (ret string, length int) {
 	split := strings.Split(query, ",")
 	for i, e := range split {
-		ret += fmt.Sprintf("%s = $%d,", e, i+1)
+		ret += fmt.Sprintf("%s=$%d,", e, i+1)
 	}
 	return strings.Trim(ret, ","), len(split)
 }
@@ -381,9 +387,9 @@ func getInnerJoin(inte interface{}, tableName string) string {
 	var ret string
 	for i := 0; i < v.NumField(); i++ {
 		if v.Field(i).Kind() == reflect.Struct && t.Field(i).Tag.Get(ForeignTable) != "" {
-			ret += fmt.Sprintf(" INNER JOIN %s ON (%s.%s = %s.%s) ", t.Field(i).Tag.Get(ForeignTable), tableName, t.Field(i).Tag.Get(Row), t.Field(i).Tag.Get(ForeignTable), t.Field(i).Tag.Get(ForeignKey))
+			ret += fmt.Sprintf("INNER JOIN %s ON (%s.%s=%s.%s) ", t.Field(i).Tag.Get(ForeignTable), tableName, t.Field(i).Tag.Get(Row), t.Field(i).Tag.Get(ForeignTable), t.Field(i).Tag.Get(ForeignKey))
 			ret += getInnerJoin(v.Field(i).Interface(), fmt.Sprintf("%s", t.Field(i).Tag.Get(ForeignTable)))
 		}
 	}
-	return ret
+	return strings.Trim(ret, " ")
 }

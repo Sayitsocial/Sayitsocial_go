@@ -23,9 +23,9 @@ func queryBuilderCreate(i interface{}, schema string, tableName string) (string,
 }
 
 // queryBuilderDelete generates normal delete queries for non nested structures
-func queryBuilderDelete(i interface{}, tableName string) (string, []interface{}) {
-	args, q := getArgsWhere(getSearchBy(i, tableName, false, false), 1)
-	query := fmt.Sprintf("DELETE FROM %s %s", tableName, q)
+func queryBuilderDelete(i interface{}, schema string, tableName string) (string, []interface{}) {
+	args, q := getArgsWhere(getSearchBy(i, tableName, false, false), 0)
+	query := fmt.Sprintf("DELETE FROM %s %s", schema+"."+tableName, q)
 	return query, args
 }
 

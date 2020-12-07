@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
@@ -44,7 +43,7 @@ func (u volCreReq) PutInDB() error {
 		return errors.New("No parameters should be empty")
 	}
 	ctx := context.Background()
-	tx, err := database.GetConn().BeginTx(ctx, nil)
+	tx, err := querybuilder.GetTransaction(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -108,7 +107,7 @@ func (o orgCreReq) PutInDB() error {
 		return errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 	ctx := context.Background()
-	tx, err := database.GetConn().BeginTx(ctx, nil)
+	tx, err := querybuilder.GetTransaction(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -153,7 +152,7 @@ func (e eventPostReq) PutInDB() error {
 	}
 
 	ctx := context.Background()
-	tx, err := database.GetConn().BeginTx(ctx, nil)
+	tx, err := querybuilder.GetTransaction(ctx, nil)
 	if err != nil {
 		return err
 	}

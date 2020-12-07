@@ -1,17 +1,18 @@
 package querybuilder
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"reflect"
-
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 )
+
+var connString string
+var dbDriver string
 
 type Model interface {
 	GetTableName() (string, string)
 }
-
 type Conn struct {
 	trans *sql.Tx
 	conn  *sql.DB
@@ -21,10 +22,45 @@ func getSlicePtr(i interface{}) interface{} {
 	return reflect.New(reflect.SliceOf(reflect.TypeOf(i))).Interface()
 }
 
+func SetConnection(pgConn string, driver string) {
+	connString = pgConn
+	dbDriver = driver
+}
+
+func connectToDB() (*sql.DB, error) {
+	if dbDriver != "" && connString != "" {
+		conn, err := sql.Open(dbDriver, connString)
+		if err != nil {
+			return nil, err
+		}
+		return conn, nil
+	}
+	return nil, fmt.Errorf("Connection string or driver can't be empty")
+}
+
+func GetTransaction(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error) {
+	conn, err := connectToDB()
+	if err != nil {
+		return nil, err
+	}
+	return conn.BeginTx(ctx, nil)
+}
+
 func Initialize(t *sql.Tx) Conn {
+	conn, err := connectToDB()
+	if err != nil {
+		// TODO: Return error
+	}
 	return Conn{
 		trans: t,
-		conn:  GetConn(),
+		conn:  conn,
+	}
+}
+
+func InitializeWithConn(c *sql.DB) Conn {
+	return Conn{
+		trans: nil,
+		conn:  c,
 	}
 }
 
@@ -34,7 +70,6 @@ func (c Conn) Get(i interface{}) (interface{}, error) {
 		isTableExist(c.conn, schema, table)
 
 		query, args := queryBuilderJoin(i, schema, table)
-		helpers.LogInfo(query)
 		row, err := c.conn.Query(query, args...)
 		if err != nil {
 			return nil, err
@@ -66,7 +101,7 @@ func (c Conn) Delete(i interface{}) error {
 		schema, table := val.GetTableName()
 		isTableExist(c.conn, schema, table)
 
-		query, args := queryBuilderDelete(i, table)
+		query, args := queryBuilderDelete(i, schema, table)
 		_, err := c.conn.Query(query, args...)
 		if err != nil {
 			return err
@@ -107,9 +142,6 @@ func (c Conn) Count(i interface{}) ([]int, error) {
 	return nil, fmt.Errorf("Provided interface is not of type 'Model'")
 }
 
-func (c Conn) Close() {
-	err := c.conn.Close()
-	if err != nil {
-		helpers.LogError(err.Error())
-	}
+func (c Conn) Close() error {
+	return c.conn.Close()
 }
