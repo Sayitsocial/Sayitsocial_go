@@ -74,7 +74,10 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
 	x, err := model.Get(data)
@@ -151,7 +154,10 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
 	x, err := model.Get(data)
@@ -278,7 +284,10 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 	x, err := model.Get(data)
 	if err != nil {
@@ -351,11 +360,14 @@ type eventPostModel struct {
 //     Responses:
 //       200: successResponse
 func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
 	var req eventPostReq
-	err := readAndUnmarshal(r, &req)
+	err = readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

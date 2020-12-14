@@ -289,7 +289,10 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // Validate user from hashes password
 func isUserValid(username string, password string) (bool, string) {
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
 	x, err := model.Get(models.Auth{
@@ -330,7 +333,10 @@ func ValidateSession(w http.ResponseWriter, r *http.Request) bool {
 	val := session.Values[helpers.UsernameKey]
 
 	if val != nil {
-		model := querybuilder.Initialize(nil)
+		model, err := querybuilder.Initialize(nil, nil)
+		if err != nil {
+			helpers.LogError(err.Error())
+		}
 		defer model.Close()
 
 		x, err := model.Get(models.Auth{Username: val.(string)})

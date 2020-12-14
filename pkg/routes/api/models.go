@@ -48,7 +48,10 @@ func (u volCreReq) PutInDB() error {
 		return err
 	}
 
-	modelAuth := querybuilder.Initialize(tx)
+	modelAuth, err := querybuilder.Initialize(nil, tx)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 
 	uid := uuid.New().String()
 
@@ -67,7 +70,10 @@ func (u volCreReq) PutInDB() error {
 	helpers.LogInfo(u.FirstName)
 	helpers.LogInfo(u.LastName)
 
-	modelData := querybuilder.Initialize(tx)
+	modelData, err := querybuilder.Initialize(nil, tx)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 
 	err = modelData.Create(models.VolData{
 		VolunteerID:  uid,
@@ -85,10 +91,13 @@ func (f followerReq) PutInDB() error {
 	if f.OrganisationID == "" || f.VolunteerID == "" {
 		return errors.New("No parameters should be empty")
 	}
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 	uid := uuid.New().String()
-	err := model.Create(models.Followers{
+	err = model.Create(models.Followers{
 		GeneratedID:    uid,
 		OrganisationID: f.OrganisationID,
 		Volunteer: models.VolData{
@@ -112,7 +121,10 @@ func (o orgCreReq) PutInDB() error {
 		return err
 	}
 
-	modelAuth := querybuilder.Initialize(tx)
+	modelAuth, err := querybuilder.Initialize(nil, tx)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 
 	uid := uuid.New().String()
 
@@ -128,7 +140,10 @@ func (o orgCreReq) PutInDB() error {
 		return err
 	}
 
-	modelData := querybuilder.Initialize(tx)
+	modelData, err := querybuilder.Initialize(nil, tx)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 
 	err = modelData.Create(models.OrgData{
 		OrganisationID: uid,
@@ -157,7 +172,10 @@ func (e eventPostReq) PutInDB() error {
 		return err
 	}
 
-	categoryModel := querybuilder.Initialize(nil)
+	categoryModel, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer categoryModel.Close()
 
 	// TODO: Use count here
@@ -177,7 +195,10 @@ func (e eventPostReq) PutInDB() error {
 		return errors.New("Invalid location [Should be Longitude, Latitude, Radius]")
 	}
 
-	eventModel := querybuilder.Initialize(tx)
+	eventModel, err := querybuilder.Initialize(nil, tx)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 
 	eventID := uuid.New().String()
 
@@ -199,7 +220,10 @@ func (e eventPostReq) PutInDB() error {
 		return err
 	}
 
-	eventHostBridgeModel := querybuilder.Initialize(tx)
+	eventHostBridgeModel, err := querybuilder.Initialize(nil, tx)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 
 	err = eventHostBridgeModel.Create(models.EventHostBridge{
 		GeneratedID: uuid.New().String(),
@@ -312,7 +336,10 @@ func (f followerReq) RemoveFromDB() error {
 		return errors.New("All parameters are required")
 	}
 
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
 	return model.Delete(models.Followers{

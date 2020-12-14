@@ -132,7 +132,10 @@ func volGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := querybuilder.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
 	x, err := model.Get(data)
