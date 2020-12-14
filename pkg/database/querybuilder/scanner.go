@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
-
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 )
 
 func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
@@ -27,12 +25,11 @@ func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
 	return ptrs
 }
 
-// GetIntoStruct scans rows into slice of struct
-func GetIntoStruct(rows *sql.Rows, dest interface{}) error {
+// getIntoStruct scans rows into slice of struct
+func getIntoStruct(rows *sql.Rows, dest interface{}) error {
 	v := reflect.ValueOf(dest)
 	direct := reflect.Indirect(v)
 
-	helpers.LogInfo(v.Kind())
 	if v.Kind() != reflect.Ptr {
 		return fmt.Errorf("Destination not pointer")
 	}
@@ -59,15 +56,22 @@ func GetIntoStruct(rows *sql.Rows, dest interface{}) error {
 	return nil
 }
 
-// GetIntoVar scans row into slice of single variable
-func GetIntoVar(rows *sql.Rows, dest interface{}) error {
+// getIntoVar scans row into slice of single variable
+func getIntoVar(rows *sql.Rows, dest interface{}) error {
 	v := reflect.ValueOf(dest)
 	direct := reflect.Indirect(v)
+
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("Destination not pointer")
+	}
+	if direct.Kind() != reflect.Slice {
+		return fmt.Errorf("Destination not slice")
+	}
+
 	base := v.Elem().Type().Elem()
 
 	if v.Kind() != reflect.Ptr {
 		return fmt.Errorf("Destination not pointer")
-
 	}
 
 	for rows.Next() {

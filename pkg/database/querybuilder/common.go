@@ -47,26 +47,26 @@ type inbuiltType interface {
 }
 
 // isTableExist runs migrations if table is non existent
-func isTableExist(conn *sql.DB, schema string, table string) error {
-	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname=$1 AND tablename =$2);`, schema, table)
-	var exists bool
-	if err != nil {
-		for rows.Next() {
-			err := rows.Scan(&exists)
-			if err != nil {
-				return err
-			}
-		}
-	}
+// func isTableExist(conn *sql.DB, schema string, table string) error {
+// 	rows, err := conn.Query(`SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname=$1 AND tablename =$2);`, schema, table)
+// 	var exists bool
+// 	if err != nil {
+// 		for rows.Next() {
+// 			err := rows.Scan(&exists)
+// 			if err != nil {
+// 				return err
+// 			}
+// 		}
+// 	}
 
-	if !exists {
-		err := database.RunMigrations()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// 	if !exists {
+// 		err := database.RunMigrations()
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 // IsValueExists checks if value exists in table
 // If it exists returns the ID of that value

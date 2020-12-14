@@ -18,10 +18,6 @@ type Conn struct {
 	conn  *sql.DB
 }
 
-func getSlicePtr(i interface{}) interface{} {
-	return reflect.New(reflect.SliceOf(reflect.TypeOf(i))).Interface()
-}
-
 func SetConnection(pgConn string, driver string) {
 	connString = pgConn
 	dbDriver = driver
@@ -46,28 +42,29 @@ func GetTransaction(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error
 	return conn.BeginTx(ctx, nil)
 }
 
-func Initialize(t *sql.Tx) Conn {
+func Initialize(c *sql.DB, t *sql.Tx) (*Conn, error) {
+	var conn *sql.DB
+	if c != nil {
+		conn = c
+	}
 	conn, err := connectToDB()
 	if err != nil {
-		// TODO: Return error
+		return nil, err
 	}
-	return Conn{
+	return &Conn{
 		trans: t,
 		conn:  conn,
-	}
+	}, nil
 }
 
-func InitializeWithConn(c *sql.DB) Conn {
-	return Conn{
-		trans: nil,
-		conn:  c,
-	}
+func getSlicePtr(i interface{}) interface{} {
+	return reflect.New(reflect.SliceOf(reflect.TypeOf(i))).Interface()
 }
 
 func (c Conn) queryMethod(i interface{}, method func(interface{}, string, string) (string, []interface{})) (*sql.Rows, error) {
 	if val, ok := i.(Model); ok {
 		schema, table := val.GetTableName()
-		isTableExist(c.conn, schema, table)
+		// isTableExist(c.conn, schema, table)
 
 		query, args := method(i, schema, table)
 		row, err := c.conn.Query(query, args...)
@@ -79,16 +76,16 @@ func (c Conn) queryMethod(i interface{}, method func(interface{}, string, string
 	return nil, fmt.Errorf("Provided interface is not of type 'Model'")
 }
 
-func (c Conn) Get(i interface{}) (interface{}, error) {
+func (c *Conn) Get(i interface{}) (interface{}, error) {
 	s := getSlicePtr(i)
 	row, err := c.queryMethod(i, queryBuilderJoin)
 	if err != nil {
 		return s, err
 	}
-	return s, GetIntoStruct(row, s)
+	return s, getIntoStruct(row, s)
 }
 
-func (c Conn) Create(i interface{}) error {
+func (c *Conn) Create(i interface{}) error {
 	_, err := c.queryMethod(i, queryBuilderCreate)
 	if err != nil {
 		return err
@@ -97,7 +94,7 @@ func (c Conn) Create(i interface{}) error {
 	return nil
 }
 
-func (c Conn) Delete(i interface{}) error {
+func (c *Conn) Delete(i interface{}) error {
 	_, err := c.queryMethod(i, queryBuilderDelete)
 	if err != nil {
 		return err
@@ -105,7 +102,7 @@ func (c Conn) Delete(i interface{}) error {
 	return nil
 }
 
-func (c Conn) Update(i interface{}) error {
+func (c *Conn) Update(i interface{}) error {
 	_, err := c.queryMethod(i, queryBuilderUpdate)
 	if err != nil {
 		return err
@@ -113,15 +110,15 @@ func (c Conn) Update(i interface{}) error {
 	return nil
 }
 
-func (c Conn) Count(i interface{}) ([]int, error) {
+func (c *Conn) Count(i interface{}) ([]int, error) {
 	s := make([]int, 0)
 	row, err := c.queryMethod(i, queryBuilderJoin)
 	if err != nil {
 		return s, err
 	}
-	return s, GetIntoVar(row, s)
+	return s, getIntoVar(row, &s)
 }
 
-func (c Conn) Close() error {
+func (c *Conn) Close() error {
 	return c.conn.Close()
 }
