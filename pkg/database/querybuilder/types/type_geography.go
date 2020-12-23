@@ -12,26 +12,26 @@ type GeographyPoints struct {
 	Radius    string `scan:"ignore" json:"-"`
 }
 
-func (GeographyPoints) memberSearchQuery(tableName string, rowTag string) string {
+func (GeographyPoints) SearchQuery(tableName string, rowTag string) string {
 	return fmt.Sprintf("ST_X(%s.%s::geometry),ST_Y(%s.%s::geometry)", tableName, rowTag, tableName, rowTag)
 }
 
-func (g GeographyPoints) memberCreateQuery(tableName string, rowTag string) string {
+func (g GeographyPoints) CreateQuery(tableName string, rowTag string) string {
 	return rowTag
 }
 
-func (g GeographyPoints) whereQuery(tableName string, rowTag string) (string, []interface{}) {
+func (g GeographyPoints) WhereQuery(tableName string, rowTag string) (string, []interface{}) {
 	return fmt.Sprintf("ST_DWithin(%s.%s,ST_MakePoint(%v,%v),%v)", tableName, rowTag, g.Longitude, g.Latitude, g.Radius), make([]interface{}, 0)
 }
 
-func (g GeographyPoints) createArgs(i string) (string, []interface{}) {
+func (g GeographyPoints) CreateArgs(i string) (string, []interface{}) {
 	return fmt.Sprintf("ST_SetSRID(ST_MakePoint(%v,%v),4326)", g.Longitude, g.Latitude), make([]interface{}, 0)
 }
 
-func (g GeographyPoints) isEmpty() bool {
+func (g GeographyPoints) IsEmpty() bool {
 	return (g.Latitude == "" || g.Longitude == "")
 }
 
-func (GeographyPoints) ignoreScan() bool {
+func (GeographyPoints) IgnoreScan() bool {
 	return false
 }
