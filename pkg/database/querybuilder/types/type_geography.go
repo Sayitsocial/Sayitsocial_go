@@ -1,8 +1,7 @@
-package querybuilder
+package types
 
 import (
 	"fmt"
-	"reflect"
 )
 
 // GeographyPoints is a struct that holds longitude, latitude of a location and optionally radius
@@ -21,17 +20,12 @@ func (g GeographyPoints) memberCreateQuery(tableName string, rowTag string) stri
 	return rowTag
 }
 
-func (g GeographyPoints) whereQuery(tableName string, rowTag string) tmpHolder {
-	return tmpHolder{
-		name:   fmt.Sprintf("ST_DWithin(%s.%s,ST_MakePoint(%v,%v),%v)", tableName, rowTag, g.Longitude, g.Latitude, g.Radius),
-		typeOf: "onlyname",
-		value:  reflect.ValueOf(g),
-	}
-
+func (g GeographyPoints) whereQuery(tableName string, rowTag string) (string, []interface{}) {
+	return fmt.Sprintf("ST_DWithin(%s.%s,ST_MakePoint(%v,%v),%v)", tableName, rowTag, g.Longitude, g.Latitude, g.Radius), make([]interface{}, 0)
 }
 
-func (g GeographyPoints) createArgs() string {
-	return fmt.Sprintf("ST_SetSRID(ST_MakePoint(%v,%v),4326)", g.Longitude, g.Latitude)
+func (g GeographyPoints) createArgs(i string) (string, []interface{}) {
+	return fmt.Sprintf("ST_SetSRID(ST_MakePoint(%v,%v),4326)", g.Longitude, g.Latitude), make([]interface{}, 0)
 }
 
 func (g GeographyPoints) isEmpty() bool {

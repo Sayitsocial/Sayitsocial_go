@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 )
 
 func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
@@ -14,7 +16,7 @@ func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
 			continue
 		}
 		if dd.Kind() == reflect.Struct {
-			if isInbuiltType(dd) && dd.Interface().(inbuiltType).ignoreScan() {
+			if isInbuiltType(dd) && dd.Interface().(types.InbuiltType).IgnoreScan() {
 				continue
 			}
 			ptrs = append(ptrs, getPtrs(dest.Field(i), typeOf.Field(i).Type)...)
@@ -69,10 +71,6 @@ func getIntoVar(rows *sql.Rows, dest interface{}) error {
 	}
 
 	base := v.Elem().Type().Elem()
-
-	if v.Kind() != reflect.Ptr {
-		return fmt.Errorf("Destination not pointer")
-	}
 
 	for rows.Next() {
 		vp := reflect.New(base)

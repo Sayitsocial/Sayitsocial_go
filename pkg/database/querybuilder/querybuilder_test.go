@@ -27,9 +27,10 @@ func (TestModel) GetTableName() (string, string) {
 	return "public", "test_model"
 }
 
-func queryBuilderCommon(model Model, passQuery string, passArgs func([]interface{}) bool, method func(interface{}, string, string) (string, []interface{})) error {
+func queryBuilderCommon(model Model, passQuery string, config Config, passArgs func([]interface{}) bool, method func([]colHolder, []foreignHolder, Config, string, string) (string, []interface{})) error {
 	schema, table := model.GetTableName()
-	query, args := method(model, schema, table)
+	cols, foreign := generateColHolder(model, schema+"."+table, false)
+	query, args := method(cols, foreign, config, schema, table)
 	if strings.Trim(query, " ") != passQuery {
 		return fmt.Errorf("Expected query %s, got %s", passQuery, query)
 	}
@@ -48,28 +49,28 @@ func Test_QueryGetNonNested(t *testing.T) {
 		}
 		return true
 	}
-	err := queryBuilderCommon(Dummy{}, passQuery, passArgs, queryBuilderJoin)
+	err := queryBuilderCommon(Dummy{}, passQuery, Config{}, passArgs, queryBuilderJoin)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func Test_QueryGet(t *testing.T) {
-	passQuery := `SELECT public.test_model.column1,public.test_model.column2,public.test_model.column3,public.test_model.column4,public.dummy.column5,public.dummy.column6 FROM public.test_model INNER JOIN public.dummy ON (test_model.column5=public.dummy.column5)`
+	passQuery := `SELECT public.test_model.column1,public.test_model.column2,public.test_model.column3,public.test_model.column4,public.dummy.column5,public.dummy.column6 FROM public.test_model INNER JOIN public.dummy ON (public.test_model.column5=public.dummy.column5)`
 	passArgs := func(args []interface{}) bool {
 		if len(args) > 0 {
 			return false
 		}
 		return true
 	}
-	err := queryBuilderCommon(TestModel{}, passQuery, passArgs, queryBuilderJoin)
+	err := queryBuilderCommon(TestModel{}, passQuery, Config{}, passArgs, queryBuilderJoin)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func Test_QueryGetWithArgs(t *testing.T) {
-	passQuery := `SELECT public.test_model.column1,public.test_model.column2,public.test_model.column3,public.test_model.column4,public.dummy.column5,public.dummy.column6 FROM public.test_model INNER JOIN public.dummy ON (test_model.column5=public.dummy.column5) WHERE test_model.column1=$1`
+	passQuery := `SELECT public.test_model.column1,public.test_model.column2,public.test_model.column3,public.test_model.column4,public.dummy.column5,public.dummy.column6 FROM public.test_model INNER JOIN public.dummy ON (public.test_model.column5=public.dummy.column5) WHERE public.test_model.column1=$1`
 	passArgs := func(args []interface{}) bool {
 		if len(args) != 1 || args[0] != "test" {
 			return false
@@ -78,7 +79,7 @@ func Test_QueryGetWithArgs(t *testing.T) {
 	}
 	err := queryBuilderCommon(TestModel{
 		Column1: "test",
-	}, passQuery, passArgs, queryBuilderJoin)
+	}, passQuery, Config{}, passArgs, queryBuilderJoin)
 	if err != nil {
 		t.Error(err)
 	}
@@ -101,7 +102,7 @@ func Test_QueryCreate(t *testing.T) {
 			Column5: "test3",
 			Column6: "test4", // Shouldn't be inserted
 		},
-	}, passQuery, passArgs, queryBuilderCreate)
+	}, passQuery, Config{}, passArgs, queryBuilderCreate)
 	if err != nil {
 		t.Error(err)
 	}
@@ -124,7 +125,7 @@ func Test_QueryUpdate(t *testing.T) {
 			Column5: "test3",
 			Column6: "test4", // Shouldn't be inserted
 		},
-	}, passQuery, passArgs, queryBuilderUpdate)
+	}, passQuery, Config{}, passArgs, queryBuilderUpdate)
 	if err != nil {
 		t.Error(err)
 	}
@@ -140,7 +141,7 @@ func Test_QueryDelete(t *testing.T) {
 	}
 	err := queryBuilderCommon(TestModel{
 		Column1: "test1",
-	}, passQuery, passArgs, queryBuilderDelete)
+	}, passQuery, Config{}, passArgs, queryBuilderDelete)
 	if err != nil {
 		t.Error(err)
 	}
@@ -154,7 +155,7 @@ func Test_QueryCount(t *testing.T) {
 		}
 		return true
 	}
-	err := queryBuilderCommon(TestModel{}, passQuery, passArgs, queryBuilderCount)
+	err := queryBuilderCommon(TestModel{}, passQuery, Config{}, passArgs, queryBuilderCount)
 	if err != nil {
 		t.Error(err)
 	}

@@ -28,10 +28,12 @@ func Test_GetIntoStruct(t *testing.T) {
 	model, err := Initialize(db, nil)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	row, err := model.queryMethod(Test{}, queryBuilderJoin)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	s := getSlicePtr(Test{})
@@ -39,11 +41,13 @@ func Test_GetIntoStruct(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
+		return
 	}
 
 	if val, ok := s.(Test); ok {
 		if val.Column1 != "test" && val.Column2 != "test1" {
 			t.Errorf("Expected &[{test test1}], got %v", s)
+			return
 		}
 	}
 }
