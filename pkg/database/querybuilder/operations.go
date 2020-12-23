@@ -14,8 +14,9 @@ type Model interface {
 	GetTableName() (string, string)
 }
 type Conn struct {
-	trans *sql.Tx
-	conn  *sql.DB
+	trans  *sql.Tx
+	conn   *sql.DB
+	Config Config
 }
 
 func SetConnection(pgConn string, driver string) {
@@ -39,17 +40,19 @@ func GetTransaction(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error
 	if err != nil {
 		return nil, err
 	}
-	return conn.BeginTx(ctx, nil)
+	return conn.BeginTx(ctx, options)
 }
 
 func Initialize(c *sql.DB, t *sql.Tx) (*Conn, error) {
 	var conn *sql.DB
+	var err error
 	if c != nil {
 		conn = c
-	}
-	conn, err := connectToDB()
-	if err != nil {
-		return nil, err
+	} else {
+		conn, err = connectToDB()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &Conn{
 		trans: t,
@@ -61,12 +64,13 @@ func getSlicePtr(i interface{}) interface{} {
 	return reflect.New(reflect.SliceOf(reflect.TypeOf(i))).Interface()
 }
 
-func (c Conn) queryMethod(i interface{}, method func(interface{}, string, string) (string, []interface{})) (*sql.Rows, error) {
+func (c *Conn) queryMethod(i interface{}, method func([]colHolder, []foreignHolder, Config, string, string) (string, []interface{})) (*sql.Rows, error) {
 	if val, ok := i.(Model); ok {
 		schema, table := val.GetTableName()
 		// isTableExist(c.conn, schema, table)
+		cols, foreign := generateColHolder(i, schema+"."+table, false)
 
-		query, args := method(i, schema, table)
+		query, args := method(cols, foreign, c.Config, schema, table)
 		row, err := c.conn.Query(query, args...)
 		if err != nil {
 			return nil, err
@@ -112,7 +116,7 @@ func (c *Conn) Update(i interface{}) error {
 
 func (c *Conn) Count(i interface{}) ([]int, error) {
 	s := make([]int, 0)
-	row, err := c.queryMethod(i, queryBuilderJoin)
+	row, err := c.queryMethod(i, queryBuilderCount)
 	if err != nil {
 		return s, err
 	}

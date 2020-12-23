@@ -5,55 +5,60 @@ package querybuilder
 
 import (
 	"fmt"
-	"reflect"
 )
 
 // queryBuilderCreate generates normal create queries for non nested structures
-func queryBuilderCreate(i interface{}, schema string, tableName string) (string, []interface{}) {
-	members := getAllMembers(i, "", true)
-	index := 1
-	values, args := getValuesCount(i, &index, members)
-	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", schema+"."+tableName, members, values), args
+func queryBuilderCreate(cols []colHolder, foreign []foreignHolder, config Config, schema string, tableName string) (string, []interface{}) {
+	query, indices := getAllMembers(cols, foreign, true)
+	values, args := getInsertValues(indices, cols, foreign)
+	return indexifyQuery(fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", schema+"."+tableName, query, values)), args
 }
 
 // queryBuilderDelete generates normal delete queries for non nested structures
-func queryBuilderDelete(i interface{}, schema string, tableName string) (string, []interface{}) {
-	args, q := getArgsWhere(getSearchBy(i, tableName, false, false), 0)
+func queryBuilderDelete(cols []colHolder, foreign []foreignHolder, config Config, schema string, tableName string) (string, []interface{}) {
+	q, args := getWhere(cols, foreign, false, false)
 	query := fmt.Sprintf("DELETE FROM %s %s", schema+"."+tableName, q)
-	return query, args
+	return indexifyQuery(query), args
 }
 
 // queryBuilderUpdate generates normal update queries for non nested structures
-func queryBuilderUpdate(i interface{}, schema string, tableName string) (string, []interface{}) {
-	members := getAllMembers(i, "", true)
-	index := 1
-	_, args := getValuesCount(i, &index, members)
-	q, l := generateUpdateQuery(members)
-	tmp, where := getArgsWhere(getSearchBy(i, tableName, false, true), l)
+func queryBuilderUpdate(cols []colHolder, foreign []foreignHolder, config Config, schema string, tableName string) (string, []interface{}) {
+	q, args := generateUpdateQuery(cols, foreign)
+	where, tmp := getWhere(cols, foreign, false, true)
 	args = append(args, tmp...)
-	return fmt.Sprintf("UPDATE %s SET %s %s", schema+"."+tableName, q, where), args
+	return indexifyQuery(fmt.Sprintf("UPDATE %s SET %s %s", schema+"."+tableName, q, where)), args
 }
 
 // queryBuilderJoin generates get queries for nested structures with inner join support
-func queryBuilderJoin(inte interface{}, schema string, tableName string) (string, []interface{}) {
-	args, where := getArgsWhere(getSearchBy(inte, tableName, true, false), 0)
-	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s", getAllMembers(inte, schema+"."+tableName, false), schema+"."+tableName, getInnerJoin(inte, tableName), where, getOrderBy(inte), getLimit(inte))
-	return query, args
+func queryBuilderJoin(cols []colHolder, foreign []foreignHolder, config Config, schema string, tableName string) (string, []interface{}) {
+	q, _ := getAllMembers(cols, foreign, false)
+	where, args := getWhere(cols, foreign, true, false)
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s", q, schema+"."+tableName, getInnerJoin(foreign), where)
+
+	if config.OrderBy != "" {
+		query = fmt.Sprintf("%s ORDER BY %s %s", query, config.OrderBy, func() string {
+			if config.OrderDesc {
+				return "DESC"
+			}
+			return "ASC"
+		}())
+	}
+
+	if config.Limit != 0 {
+		query = fmt.Sprintf("%s LIMIT %d OFFSET %d", query, config.Limit, config.Offset)
+	}
+	return indexifyQuery(query), args
 }
 
 // queryBuilderCount generates count queries for primary key in structure
-func queryBuilderCount(inte interface{}, schema string, tableName string) (string, []interface{}) {
-	t := reflect.TypeOf(inte)
-	v := reflect.ValueOf(inte)
-
-	var pk string = "*"
-	for i := 0; i < v.NumField(); i++ {
-		if ok, _ := isPK(t.Field(i)); ok {
-			pk = t.Field(i).Tag.Get(Row)
+func queryBuilderCount(cols []colHolder, foreign []foreignHolder, config Config, schema string, tableName string) (string, []interface{}) {
+	pk := "*"
+	for _, col := range cols {
+		if isPK(col.primary) && !col.isForeign {
+			pk = col.col
 			break
 		}
 	}
-	args, where := getArgsWhere(getSearchBy(inte, schema+"."+tableName, false, false), 1)
-
-	return fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, schema+"."+tableName, where), args
+	where, args := getWhere(cols, foreign, false, false)
+	return indexifyQuery(fmt.Sprintf("SELECT COUNT(%s) FROM %s %s", pk, schema+"."+tableName, where)), args
 }
