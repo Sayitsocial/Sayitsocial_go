@@ -265,12 +265,6 @@ func (e eventGetReq) CastToModel() (models.Event, error) {
 		TypeOfEvent: e.TypeOfEvent,
 		Location:    e.Location,
 		Short:       e.Short,
-		// BUG: Gorilla decoder cant parse arrays properly sometimes
-		SortBy: e.SortBy,
-		Page: querybuilder.Page{
-			Limit:  helpers.MaxPage,
-			Offset: helpers.MaxPage * e.Page,
-		},
 	}, nil
 }
 
@@ -318,8 +312,6 @@ func (e orgGetReq) CastToModel() (models.OrgData, error) {
 		TypeOfOrg:      e.TypeOfOrg,
 		Location:       e.Location,
 		Short:          e.Short,
-		// BUG: Gorilla decoder cant parse arrays properly sometimes
-		SortBy: e.SortBy,
 	}, nil
 }
 

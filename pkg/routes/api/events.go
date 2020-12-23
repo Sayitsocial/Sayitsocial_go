@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
@@ -207,28 +208,28 @@ type eventGetReq struct {
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location querybuilder.GeographyPoints `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
 
-	// Sort results by [trending_index/ST_XMin(location), ASC/DESC/empty]
+	// Sort results by [trending_index/ST_XMin(location)]
 	// in: query
-	SortBy querybuilder.SortBy `schema:"sortby" json:"sortby"`
-
-	// Get short results
-	// in: query
-	Short bool `schema:"short" json:"short"`
+	SortBy string `schema:"sortby" json:"sortby"`
 
 	// Pagination
 	// in: query
 	Page int64 `schema:"page" json:"page"`
+
+	// Get short results
+	// in: query
+	Short bool `schema:"short" json:"short"`
 }
 
 // swagger:model
 type eventShort struct {
-	EventID       string                       `json:"event_id"`
-	Name          string                       `json:"name"`
-	Location      querybuilder.GeographyPoints `json:"location"`
-	TypeOfEvent   int64                        `json:"type_of_event"`
-	TrendingIndex int64                        `json:"trending_index"`
+	EventID       string                `json:"event_id"`
+	Name          string                `json:"name"`
+	Location      types.GeographyPoints `json:"location"`
+	TypeOfEvent   int64                 `json:"type_of_event"`
+	TrendingIndex int64                 `json:"trending_index"`
 }
 
 // swagger:response eventResponse
@@ -289,7 +290,7 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		helpers.LogError(err.Error())
 	}
 	defer model.Close()
-	x, err := model.Get(data)
+	x, err := model.Page(req.Page, helpers.MaxPage).Order(req.SortBy, false).Get(data)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -330,7 +331,7 @@ type eventPostReq struct {
 	// Location in [Longitude, Latitude]
 	// minItems: 2
 	// maxItems: 2
-	Location querybuilder.GeographyPoints `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
 }
 
 //swagger:parameters createEvent

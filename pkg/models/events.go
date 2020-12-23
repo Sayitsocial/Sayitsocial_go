@@ -3,24 +3,22 @@ package models
 import (
 	"encoding/json"
 
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 )
 
 // swagger:model
 type Event struct {
-	EventID       string                       `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
-	Name          string                       `row:"name" type:"like" json:"name"`
-	Description   string                       `row:"description" type:"like" json:"description,omitempty"`
-	StartTime     int64                        `row:"start_time" type:"exact" json:"start_time,omitempty"`
-	HostTime      int64                        `row:"host_time" type:"exact" json:"host_time,omitempty"`
-	Location      querybuilder.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
-	TypeOfEvent   int64                        `row:"type_of_event" type:"exact" json:"type_of_event"`
-	Category      EventCategory                `row:"category" type:"exact" ft:"events.event_category" fk:"generated_id" json:"-"`
-	TrendingIndex int64                        `row:"trending_index" type:"exact" json:"trending_index"`
-	SortBy        querybuilder.SortBy          `type:"sort" json:"-"`
-	Short         bool                         `scan:"ignore" json:"-"`
-	Page          querybuilder.Page            `json:"page"`
+	EventID       string                `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
+	Name          string                `row:"name" type:"like" json:"name"`
+	Description   string                `row:"description" type:"like" json:"description,omitempty"`
+	StartTime     int64                 `row:"start_time" type:"exact" json:"start_time,omitempty"`
+	HostTime      int64                 `row:"host_time" type:"exact" json:"host_time,omitempty"`
+	Location      types.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
+	TypeOfEvent   int64                 `row:"type_of_event" type:"exact" json:"type_of_event"`
+	Category      EventCategory         `row:"category" type:"exact" ft:"events.event_category" fk:"generated_id" json:"-"`
+	TrendingIndex int64                 `row:"trending_index" type:"exact" json:"trending_index"`
+	Short         bool                  `scan:"ignore" json:"-"`
 }
 
 func (Event) GetTableName() (string, string) {

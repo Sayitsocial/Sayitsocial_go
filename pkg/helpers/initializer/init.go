@@ -8,6 +8,7 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -27,6 +28,10 @@ func Init() error {
 	}
 
 	querybuilder.SetConnection(helpers.PgConnString, "postgres")
+	conn, _ := querybuilder.Initialize(nil, nil)
+	a, err := conn.Get(models.Event{})
+
+	helpers.LogInfo(a)
 
 	err = initWebApp()
 	if err != nil {

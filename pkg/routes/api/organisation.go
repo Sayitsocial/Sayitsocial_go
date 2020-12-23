@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
@@ -42,7 +43,7 @@ type orgCreReq struct {
 	// Location in [Longitude, Latitude]
 	// minItems: 2
 	// maxItems: 2
-	Location querybuilder.GeographyPoints `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
 }
 
 type orgCreModel struct {
@@ -114,11 +115,11 @@ type orgGetReq struct {
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location querybuilder.GeographyPoints `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
 
-	// Sort results by [followers, ASC/DESC]
+	// Sort results by [followers]
 	// in: query
-	SortBy querybuilder.SortBy `schema:"sortby" json:"sortby"`
+	SortBy string `schema:"sortby" json:"sortby"`
 
 	// Get short results
 	// in: query
@@ -127,11 +128,11 @@ type orgGetReq struct {
 
 // swagger:model
 type orgDataShort struct {
-	OrganisationID string                       `json:"organisation_id"`
-	DisplayName    string                       `json:"display_name"`
-	TypeOfOrg      int                          `json:"type_of_org"`
-	Location       querybuilder.GeographyPoints `json:"location"`
-	Followers      uint64                       `json:"follower_count"`
+	OrganisationID string                `json:"organisation_id"`
+	DisplayName    string                `json:"display_name"`
+	TypeOfOrg      int                   `json:"type_of_org"`
+	Location       types.GeographyPoints `json:"location"`
+	Followers      uint64                `json:"follower_count"`
 }
 
 // swagger:response orgResponse
@@ -189,7 +190,7 @@ func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer model.Close()
 
-	x, err := model.Get(data)
+	x, err := model.Order(req.SortBy, false).Get(data)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
