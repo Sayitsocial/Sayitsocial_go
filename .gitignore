@@ -1,6 +1,6 @@
 *Sayitsocial_go*
 *.sh
-config*
+config.*
 *.db
 *.log
 *.vscode

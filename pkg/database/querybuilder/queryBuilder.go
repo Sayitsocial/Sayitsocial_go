@@ -54,8 +54,8 @@ func queryBuilderJoin(cols []colHolder, foreign []foreignHolder, config Config, 
 func queryBuilderCount(cols []colHolder, foreign []foreignHolder, config Config, schema string, tableName string) (string, []interface{}) {
 	pk := "*"
 	for _, col := range cols {
-		if isPK(col.primary) && !col.isForeign {
-			pk = col.col
+		if isPK(col.tagData.primary) && !col.tagData.isForeign {
+			pk = col.tagData.col
 			break
 		}
 	}

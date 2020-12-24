@@ -20,6 +20,11 @@ const (
 	ForeignTable = "ft"
 	ForeignKey   = "fk"
 
+	tagName            = "sorm"
+	foreignKeyPrefix   = "fk_"
+	foreignTablePrefix = "ft_"
+	primaryPrefix      = "pk_"
+
 	PrimaryKey = "pk"
 
 	Row = "row"
@@ -27,6 +32,8 @@ const (
 	TypeOfSearch = "type"
 
 	indexPlaceholder = "`i"
+
+	ignoreScan = "ignore"
 )
 
 type valueType int
@@ -35,20 +42,61 @@ const inbuiltValueType valueType = 0
 const normalValueType valueType = 1
 
 type colHolder struct {
-	col       string
 	table     string
 	valueType valueType
 	value     interface{}
-	primary   string
-	isForeign bool
+	tagData   tagData
 }
 
 type foreignHolder struct {
 	col          string
-	table        string
 	key          string
 	foreignTable string
+	table        string
 	value        interface{}
+}
+
+type tagData struct {
+	ignore       bool
+	primary      string
+	isForeign    bool
+	foreignKey   string
+	foreignTable string
+	col          string
+}
+
+func parseStructTags(s string, isForeign bool) (data tagData) {
+	tags := strings.Split(s, ",")
+	if len(tags) > 0 {
+		data.col = tags[0]
+		for i, tag := range tags {
+			if i == 0 {
+				continue
+			}
+			if tag == ignoreScan {
+				data.ignore = true
+				return
+			}
+
+			if strings.HasPrefix(tag, foreignKeyPrefix) {
+				data.foreignKey = tag[3:]
+				data.isForeign = true
+			} else if strings.HasPrefix(tag, foreignTablePrefix) {
+				data.foreignTable = tag[3:]
+				data.isForeign = true
+			} else if strings.HasPrefix(tag, primaryPrefix) {
+				data.primary = tag[3:]
+			}
+		}
+	} else {
+		data.ignore = true
+	}
+
+	if isForeign {
+		data.isForeign = isForeign
+	}
+
+	return
 }
 
 func generateColHolder(i interface{}, tableName string, isForeign bool) (holder []colHolder, foreign []foreignHolder) {
@@ -56,40 +104,36 @@ func generateColHolder(i interface{}, tableName string, isForeign bool) (holder 
 	v := reflect.ValueOf(i)
 
 	for i := 0; i < v.NumField(); i++ {
-		if col := t.Field(i).Tag.Get(Row); col != "" {
+		if tags := parseStructTags(t.Field(i).Tag.Get(tagName), isForeign); !tags.ignore {
 			if v.Field(i).Kind() == reflect.Struct {
 				if isInbuiltType(v.Field(i)) {
 					holder = append(holder, colHolder{
-						col:       col,
 						table:     tableName,
 						valueType: inbuiltValueType,
 						value:     v.Field(i).Interface(),
-						primary:   t.Field(i).Tag.Get(PrimaryKey),
-						isForeign: isForeign,
+						tagData:   tags,
 					})
 					continue
 				}
 
 				tName := tableName
-				foreignTable := t.Field(i).Tag.Get(ForeignTable)
-				foreignKey := t.Field(i).Tag.Get(ForeignKey)
 
-				if foreignTable != "" {
-					tName = foreignTable
+				if tags.isForeign {
+					tName = tags.foreignTable
 				}
 				tHolder, tfHolder := generateColHolder(v.Field(i).Interface(), tName, func() bool {
 					return tName != tableName
 				}())
 
-				if foreignTable != "" && foreignKey != "" {
+				if tags.isForeign {
 					for _, e := range tHolder {
-						if e.col == foreignKey {
+						if e.tagData.col == tags.foreignKey {
 							foreign = append(foreign, foreignHolder{
-								col:          col,
+								col:          tags.col,
 								table:        tableName,
-								key:          foreignKey,
+								key:          tags.foreignKey,
 								value:        e.value,
-								foreignTable: foreignTable,
+								foreignTable: tags.foreignTable,
 							})
 							break
 						}
@@ -100,12 +144,10 @@ func generateColHolder(i interface{}, tableName string, isForeign bool) (holder 
 				continue
 			}
 			holder = append(holder, colHolder{
-				col:       col,
 				table:     tableName,
 				valueType: normalValueType,
 				value:     v.Field(i).Interface(),
-				primary:   t.Field(i).Tag.Get(PrimaryKey),
-				isForeign: isForeign,
+				tagData:   tags,
 			})
 		}
 	}
@@ -197,20 +239,20 @@ func getAllMembers(cols []colHolder, foreignCols []foreignHolder, isCreate bool)
 		switch isCreate {
 		case true:
 			if col.valueType == inbuiltValueType {
-				ret = fmt.Sprintf("%s,%s", ret, col.value.(types.InbuiltType).CreateQuery(col.table, col.col))
+				ret = fmt.Sprintf("%s,%s", ret, col.value.(types.InbuiltType).CreateQuery(col.table, col.tagData.col))
 				indices = append(indices, i)
 				continue
 			}
-			if col.isForeign {
+			if col.tagData.isForeign {
 				continue
 			}
-			ret = fmt.Sprintf("%s,%s", ret, col.col)
+			ret = fmt.Sprintf("%s,%s", ret, col.tagData.col)
 		case false:
 			if col.valueType == inbuiltValueType {
-				ret = fmt.Sprintf("%s,%s", ret, col.value.(types.InbuiltType).SearchQuery(col.table, col.col))
+				ret = fmt.Sprintf("%s,%s", ret, col.value.(types.InbuiltType).SearchQuery(col.table, col.tagData.col))
 				continue
 			}
-			ret = fmt.Sprintf("%s,%s.%s", ret, col.table, col.col)
+			ret = fmt.Sprintf("%s,%s.%s", ret, col.table, col.tagData.col)
 		}
 
 		if isCreate {
@@ -228,24 +270,24 @@ func getAllMembers(cols []colHolder, foreignCols []foreignHolder, isCreate bool)
 
 func getWhere(cols []colHolder, foreignCols []foreignHolder, appendTableName bool, forcePK bool) (query string, args []interface{}) {
 	for _, col := range cols {
-		if !checkEmpty(col.value) && !col.isForeign {
-			if forcePK && !isPK(col.primary) {
+		if !checkEmpty(col.value) && !col.tagData.isForeign {
+			if forcePK && !isPK(col.tagData.primary) {
 				continue
 			}
 			if appendTableName {
 				if col.valueType == inbuiltValueType {
-					tquery, targs := col.value.(types.InbuiltType).WhereQuery(col.table, col.col)
+					tquery, targs := col.value.(types.InbuiltType).WhereQuery(col.table, col.tagData.col)
 					if tquery != "" {
 						query = fmt.Sprintf("%s %s AND", query, tquery)
 					}
 					args = append(args, targs...)
 					continue
 				}
-				query = fmt.Sprintf("%s %s.%s=$%s AND", query, col.table, col.col, indexPlaceholder)
+				query = fmt.Sprintf("%s %s.%s=$%s AND", query, col.table, col.tagData.col, indexPlaceholder)
 				args = append(args, col.value)
 				continue
 			}
-			query = fmt.Sprintf("%s %s=$%s AND", query, col.col, indexPlaceholder)
+			query = fmt.Sprintf("%s %s=$%s AND", query, col.tagData.col, indexPlaceholder)
 			args = append(args, col.value)
 		}
 	}
@@ -284,14 +326,14 @@ func getInsertValues(indices []int, colHolder []colHolder, foreign []foreignHold
 
 func generateUpdateQuery(cols []colHolder, foreign []foreignHolder) (ret string, args []interface{}) {
 	for _, col := range cols {
-		if !col.isForeign && !checkEmpty(col.value) {
+		if !col.tagData.isForeign && !checkEmpty(col.value) {
 			if col.valueType == inbuiltValueType {
 				q, a := col.value.(types.InbuiltType).CreateArgs(indexPlaceholder)
-				ret = fmt.Sprintf("%s,%s=%s", ret, col.col, q)
+				ret = fmt.Sprintf("%s,%s=%s", ret, col.tagData.col, q)
 				args = append(args, a...)
 				continue
 			}
-			ret = fmt.Sprintf("%s,%s=$%s", ret, col.col, indexPlaceholder)
+			ret = fmt.Sprintf("%s,%s=$%s", ret, col.tagData.col, indexPlaceholder)
 			args = append(args, col.value)
 		}
 	}

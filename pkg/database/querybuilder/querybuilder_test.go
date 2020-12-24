@@ -7,8 +7,8 @@ import (
 )
 
 type Dummy struct {
-	Column5 string `row:"column5" type:"exact" pk:"auto"`
-	Column6 string `row:"column6" type:"like"`
+	Column5 string `sorm:"column5,pk_autoinc"`
+	Column6 string `sorm:"column6"`
 }
 
 func (Dummy) GetTableName() (string, string) {
@@ -16,11 +16,11 @@ func (Dummy) GetTableName() (string, string) {
 }
 
 type TestModel struct {
-	Column1 string `row:"column1" type:"exact" pk:"manual"`
-	Column2 string `row:"column2" type:"like"`
-	Column3 int64  `row:"column3" type:"exact"`
-	Column4 bool   `row:"column4" type:"exact"`
-	Column7 Dummy  `row:"column5" type:"exact" ft:"public.dummy" fk:"column5"`
+	Column1 string `sorm:"column1,pk_manual"`
+	Column2 string `sorm:"column2"`
+	Column3 int64  `sorm:"column3"`
+	Column4 bool   `sorm:"column4"`
+	Column7 Dummy  `sorm:"column5,ft_public.dummy,fk_column5"`
 }
 
 func (TestModel) GetTableName() (string, string) {

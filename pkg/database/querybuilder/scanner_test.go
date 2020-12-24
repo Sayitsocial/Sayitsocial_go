@@ -7,8 +7,8 @@ import (
 )
 
 type Test struct {
-	Column1 string `row:"column1" type:"exact" pk:"auto"`
-	Column2 string `row:"column2" type:"exact"`
+	Column1 string `sorm:"column1,pk_autoinc"`
+	Column2 string `sorm:"column2"`
 }
 
 func (Test) GetTableName() (string, string) {

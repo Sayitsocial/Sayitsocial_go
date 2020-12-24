@@ -7,8 +7,8 @@ import (
 )
 
 type GeographyTest struct {
-	Column1 string                `row:"column1" pk:"auto" type:"exact"`
-	Column2 types.GeographyPoints `row:"column2" type:"exact"`
+	Column1 string                `sorm:"column1,pk_autoinc"`
+	Column2 types.GeographyPoints `sorm:"column2"`
 }
 
 func (GeographyTest) GetTableName() (string, string) {

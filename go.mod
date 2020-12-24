@@ -20,6 +20,7 @@ require (
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-sqlite3 v1.14.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
+	github.com/onsi/ginkgo v1.7.0
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/rogpeppe/go-internal v1.6.2 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
