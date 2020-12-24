@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"go.autocompleteUnimportedPackages": true,
+		"go.lintOnSave": "file",
+		"go.useLanguageServer": true,
+		"go.useCodeSnippetsOnFunctionSuggest": true,
+		"go.vetOnSave": "workspace",
+		"goOutliner.extendExplorerTab": true,
+		"goTestExplorer.profiler.showCodeLens": true,
+		"goTestExplorer.runPackage.excludeBenchmarks": false
+	}
+}
