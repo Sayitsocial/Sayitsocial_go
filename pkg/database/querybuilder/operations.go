@@ -67,7 +67,6 @@ func getSlicePtr(i interface{}) interface{} {
 func (c *Conn) queryMethod(i interface{}, method func([]colHolder, []foreignHolder, Config, string, string) (string, []interface{})) (*sql.Rows, error) {
 	if val, ok := i.(Model); ok {
 		schema, table := val.GetTableName()
-		// isTableExist(c.conn, schema, table)
 		cols, foreign := generateColHolder(i, schema+"."+table, false)
 
 		query, args := method(cols, foreign, c.Config, schema, table)
