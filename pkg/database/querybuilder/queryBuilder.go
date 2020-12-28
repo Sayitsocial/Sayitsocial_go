@@ -1,6 +1,3 @@
-// Basically a massive clusterfuck of I dont know what
-// Should've used hardcoded queries :''(
-
 package querybuilder
 
 import (
@@ -55,7 +52,7 @@ func queryBuilderCount(cols []colHolder, foreign []foreignHolder, config Config,
 	pk := "*"
 	for _, col := range cols {
 		if isPK(col.tagData.primary) && !col.tagData.isForeign {
-			pk = col.tagData.col
+			pk = col.tagData.columnName
 			break
 		}
 	}
