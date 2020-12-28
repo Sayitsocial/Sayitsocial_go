@@ -16,11 +16,11 @@ func (GeographyPoints) SearchQuery(tableName string, rowTag string) string {
 	return fmt.Sprintf("ST_X(%s.%s::geometry),ST_Y(%s.%s::geometry)", tableName, rowTag, tableName, rowTag)
 }
 
-func (g GeographyPoints) CreateQuery(tableName string, rowTag string) string {
+func (g GeographyPoints) CreateQuery(rowTag string) string {
 	return rowTag
 }
 
-func (g GeographyPoints) WhereQuery(tableName string, rowTag string) (string, []interface{}) {
+func (g GeographyPoints) WhereQuery(tableName string, rowTag string, indexPlaceholder string) (string, []interface{}) {
 	return fmt.Sprintf("ST_DWithin(%s.%s,ST_MakePoint(%v,%v),%v)", tableName, rowTag, g.Longitude, g.Latitude, g.Radius), make([]interface{}, 0)
 }
 

@@ -7,13 +7,13 @@ type InbuiltType interface {
 	SearchQuery(tableName string, rowTag string) string
 
 	// Custom query to be replaced while searching of database columns in INSERT operation
-	CreateQuery(tableName string, rowTag string) string
+	CreateQuery(rowTag string) string
 
 	// Returns custom arguments for create query
 	CreateArgs(indexPlaceholder string) (string, []interface{})
 
 	// Returns custom holder to parse where queries
-	WhereQuery(tableName string, rowTag string) (string, []interface{})
+	WhereQuery(tableName string, rowTag string, indexPlaceholder string) (string, []interface{})
 
 	// Checks if struct is empty or not
 	IsEmpty() bool
