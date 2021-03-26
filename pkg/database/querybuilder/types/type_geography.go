@@ -9,7 +9,7 @@ import (
 type GeographyPoints struct {
 	Longitude string `json:"longitude"`
 	Latitude  string `json:"latitude"`
-	Radius    string `scan:"ignore" json:"-"`
+	Radius    string `sorm:"radius,ignore" json:"-"`
 }
 
 func (GeographyPoints) SearchQuery(tableName string, rowTag string) string {

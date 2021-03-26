@@ -210,6 +210,7 @@ func getAllMembers(cols []colHolder, foreignCols []foreignHolder, isCreate bool)
 				ret = fmt.Sprintf("%s,%s", ret, col.value.(types.InbuiltType).SearchQuery(col.table, col.tagData.columnName))
 				continue
 			}
+
 			ret = fmt.Sprintf("%s,%s.%s", ret, col.table, col.tagData.columnName)
 		}
 
@@ -301,7 +302,7 @@ func generateUpdateQuery(cols []colHolder, foreign []foreignHolder) (ret string,
 
 func getInnerJoin(foreign []foreignHolder) (ret string) {
 	for _, foreignCols := range foreign {
-		ret = fmt.Sprintf("INNER JOIN %s ON (%s.%s=%s.%s)", foreignCols.foreignTable, foreignCols.originTable, foreignCols.originCol, foreignCols.foreignTable, foreignCols.foreignKey)
+		ret += fmt.Sprintf("INNER JOIN %s ON (%s.%s=%s.%s) ", foreignCols.foreignTable, foreignCols.originTable, foreignCols.originCol, foreignCols.foreignTable, foreignCols.foreignKey)
 	}
 	return
 }

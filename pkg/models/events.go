@@ -9,16 +9,16 @@ import (
 
 // swagger:model
 type Event struct {
-	EventID       string                `row:"event_id" type:"exact" json:"event_id" pk:"manual"`
-	Name          string                `row:"name" type:"like" json:"name"`
-	Description   string                `row:"description" type:"like" json:"description,omitempty"`
-	StartTime     int64                 `row:"start_time" type:"exact" json:"start_time,omitempty"`
-	HostTime      int64                 `row:"host_time" type:"exact" json:"host_time,omitempty"`
-	Location      types.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
-	TypeOfEvent   int64                 `row:"type_of_event" type:"exact" json:"type_of_event"`
-	Category      EventCategory         `row:"category" type:"exact" ft:"events.event_category" fk:"generated_id" json:"-"`
-	TrendingIndex int64                 `row:"trending_index" type:"exact" json:"trending_index"`
-	Short         bool                  `scan:"ignore" json:"-"`
+	EventID       string                `sorm:"event_id,pk_manual" json:"event_id" `
+	Name          string                `sorm:"name" json:"name"`
+	Description   string                `sorm:"description" json:"description,omitempty"`
+	StartTime     int64                 `sorm:"start_time"  json:"start_time,omitempty"`
+	HostTime      int64                 `sorm:"host_time"  json:"host_time,omitempty"`
+	Location      types.GeographyPoints `sorm:"location"  json:"location"`
+	TypeOfEvent   int64                 `sorm:"type_of_event"  json:"type_of_event"`
+	Category      EventCategory         `sorm:"category,ft_events.event_category,fk_generated_id" json:"-"`
+	TrendingIndex int64                 `sorm:"trending_index" json:"trending_index"`
+	Short         bool                  `sorm:"short,ignore" json:"-"`
 }
 
 func (Event) GetTableName() (string, string) {

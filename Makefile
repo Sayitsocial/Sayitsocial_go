@@ -18,3 +18,6 @@ buildx-goapp:
 
 build-react:
 	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag ${REGISTRY_PATH_REACT}/sayitsocial-react\:${TAG_REACT} ./web/v2/
+
+run:
+	DEBUG=true go run main.go

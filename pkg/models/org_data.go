@@ -10,18 +10,18 @@ import (
 // OrgData is a model to store data about an organisation
 // swagger:model
 type OrgData struct {
-	OrganisationID string                `row:"organisation_id" type:"exact" pk:"manual" json:"organisation_id"`
-	DisplayName    string                `row:"display_name" type:"like" json:"display_name"`
-	RegistrationNo string                `row:"registration_no" type:"exact" json:"registration_no,omitempty"`
-	ContactEmail   string                `row:"contact_email" type:"like" json:"contact_email,omitempty"`
-	ContactPhone   string                `row:"contact_phone" type:"like" json:"contact_phone"`
-	Desc           string                `row:"description" type:"like" json:"desc,omitempty"`
-	Owner          string                `row:"owner" type:"like" json:"owner,omitempty"`
-	Achievements   string                `row:"achievements" type:"like" json:"achievements,omitempty"`
-	TypeOfOrg      int                   `row:"type_of_org" type:"like" json:"type_of_org"`
-	Followers      uint64                `row:"followers" type:"exact" json:"follower_count"`
-	Location       types.GeographyPoints `row:"location" type:"onlyvalue" json:"location"`
-	Short          bool                  `scan:"ignore" json:"-"`
+	OrganisationID string                `sorm:"organisation_id,pk_manual" json:"organisation_id"`
+	DisplayName    string                `sorm:"display_name" json:"display_name"`
+	RegistrationNo string                `sorm:"registration_no" json:"registration_no,omitempty"`
+	ContactEmail   string                `sorm:"contact_email" json:"contact_email,omitempty"`
+	ContactPhone   string                `sorm:"contact_phone" json:"contact_phone"`
+	Desc           string                `sorm:"description" json:"desc,omitempty"`
+	Owner          string                `sorm:"owner" json:"owner,omitempty"`
+	Achievements   string                `sorm:"achievements" json:"achievements,omitempty"`
+	TypeOfOrg      int                   `sorm:"type_of_org" json:"type_of_org"`
+	Followers      uint64                `sorm:"followers"  json:"follower_count"`
+	Location       types.GeographyPoints `sorm:"location" json:"location"`
+	Short          bool                  `sorm:"short,ignore" json:"-"`
 }
 
 func (OrgData) OrgData() (string, string) {

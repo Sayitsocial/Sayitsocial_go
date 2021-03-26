@@ -2,7 +2,7 @@ version: '3'
 
 services:
   postgres:
-    image: ${REGISTRY_PATH_POSTGRES}/postgis:12-3.0-alpine
+    image: postgis/postgis:12-3.0-alpine
     env_file:
       - postgres.env
     volumes:
@@ -16,7 +16,7 @@ services:
     build:
       context: ./web/v2
       dockerfile: Dockerfile
-    image: ${REGISTRY_PATH_REACT}/sayitsocial-react:${TAG_REACT}
+    image: sayitsocial/sayitsocial-react:${TAG_REACT}
     env_file:
       - react.env
     volumes:
@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ${REGISTRY_PATH_GO}/sayitsocial:${TAG_GO}
+    image: sayitsocial/sayitsocial:${TAG_GO}
     env_file:
       - goapp.env
     ports: 

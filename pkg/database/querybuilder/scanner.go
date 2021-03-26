@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 )
@@ -12,7 +13,7 @@ func getPtrs(dest reflect.Value, typeOf reflect.Type) []interface{} {
 	ptrs := make([]interface{}, 0)
 	for i := 0; i < dest.NumField(); i++ {
 		dd := reflect.Indirect(dest.Field(i))
-		if typeOf.Field(i).Tag.Get("scan") == "ignore" {
+		if isIgnore(typeOf.Field(i).Tag.Get(tagName)) {
 			continue
 		}
 		if dd.Kind() == reflect.Struct {
@@ -83,4 +84,17 @@ func getIntoVar(rows *sql.Rows, dest interface{}) error {
 		direct.Set(reflect.Append(direct, reflect.Indirect(vp)))
 	}
 	return nil
+}
+
+func isIgnore(tag string) bool {
+	return contains(strings.Split(tag, ","), ignoreScan)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
