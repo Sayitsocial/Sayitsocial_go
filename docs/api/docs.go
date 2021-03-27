@@ -5,7 +5,7 @@
 //     Schemes: http
 //     BasePath:
 //     Version: 1.0.0
-//     Host: localhost:8000
+//     Host: dev.sayitsocial.in:6969
 //
 //     Consumes:
 //     - application/json
