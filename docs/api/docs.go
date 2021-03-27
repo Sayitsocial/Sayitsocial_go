@@ -5,7 +5,7 @@
 //     Schemes: http
 //     BasePath:
 //     Version: 1.0.0
-//     Host: sayitsocial-dev.ddns.net:8000
+//     Host: localhost:8000
 //
 //     Consumes:
 //     - application/json

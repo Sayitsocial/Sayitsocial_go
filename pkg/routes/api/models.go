@@ -268,6 +268,10 @@ func (e eventGetReq) CastToModel() (models.Event, error) {
 	}, nil
 }
 
+func (e eventGetAllReq) CastToModel() (models.Event, error) {
+	return models.Event{Short: true}, nil
+}
+
 // CastToModel converts request struct to model struct
 func (e eventHostReq) CastToModel() (models.EventHostBridge, error) {
 	if e.GeneratedID == "" && e.OrganisationID == "" && e.VolunteerID == "" && e.EventID == "" {

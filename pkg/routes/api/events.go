@@ -304,6 +304,70 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Event details
+//
+//swagger:parameters getEventAll
+type eventGetAllReq struct {
+	// Sort results by [trending_index/ST_XMin(location)]
+	// in: query
+	SortBy string `schema:"sortby" json:"sortby"`
+
+	// Pagination
+	// in: query
+	Page int64 `schema:"page" json:"page"`
+}
+
+// swagger:route GET /api/event/get/all event getEventAll
+//
+// Get all events
+//
+//
+// This will show details of event
+// Atleast one param is required
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       - 200: eventResponse
+//		 - 201: eventShortResponse
+func eventGetAllHandler(w http.ResponseWriter, r *http.Request) {
+	var req eventGetAllReq
+	err := readAndUnmarshal(r, &req)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
+		return
+	}
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
+	defer model.Close()
+	data, err := req.CastToModel()
+	x, err := model.Page(req.Page, helpers.MaxPage).Order(req.SortBy, false).Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.Event))
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+		return
+	}
+}
+
 //swagger:model
 type eventPostReq struct {
 

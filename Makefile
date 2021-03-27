@@ -14,10 +14,12 @@ build:
 	docker-compose up --build
 
 buildx-goapp:
-	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag ${REGISTRY_PATH_GO}/sayitsocial\:${TAG_GO} .
+	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag sayitsocial/sayitsocial\:${TAG_GO} .
 
 build-react:
-	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag ${REGISTRY_PATH_REACT}/sayitsocial-react\:${TAG_REACT} ./web/v2/
+	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 --tag sayitsocial/sayitsocial-react\:${TAG_REACT} ./web/v2/
+
+push: buildx-goapp build-react
 
 run:
 	DEBUG=true go run main.go
