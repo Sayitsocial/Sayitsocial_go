@@ -28,5 +28,8 @@ build-react:
 
 push: buildx-goapp build-react
 
+pull:
+	docker pull sayitsocial/sayitsocial:development && docker pull sayitsocial/sayitsocial-react:development
+
 run:
 	DEBUG=true go run main.go
