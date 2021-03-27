@@ -2,7 +2,7 @@ version: '3'
 
 services:
   postgres:
-    image: postgis/postgis:12-3.0-alpine
+    image: sayitsocial/postgis:${TAG_PG}
     env_file:
       - postgres.env
     volumes:
