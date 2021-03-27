@@ -19,6 +19,8 @@ services:
     image: sayitsocial/sayitsocial-react:${TAG_REACT}
     volumes:
       - reactapp:/data
+    ports: 
+      - 7888:80
   sayitsocialgo:
     build:
       context: .
