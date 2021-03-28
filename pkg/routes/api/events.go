@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventattendee"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/event/bridge/eventhost"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
@@ -36,8 +35,8 @@ type eventHostReq struct {
 
 // swagger:response eventHostResponse
 type eventHostResp struct {
-	// in: body
-	eventHost eventhost.EventHostBridge
+	// in: query
+	eventHost models.EventHostBridge
 }
 
 // swagger:route GET /api/event/host event getEventHost
@@ -63,7 +62,7 @@ type eventHostResp struct {
 //       200: eventHostResponse
 func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventHostReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -76,10 +75,19 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := eventhost.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.EventHostBridge))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -107,8 +115,8 @@ type eventAttendeeReq struct {
 
 // swagger:response eventAttendeeResponse
 type eventAttendeeResponse struct {
-	// in: body
-	eventAttendee eventattendee.EventAttendeeBridge
+	// in: query
+	eventAttendee models.EventAttendeeBridge
 }
 
 // swagger:route GET /api/event/attendee event getEventAttendee
@@ -134,7 +142,7 @@ type eventAttendeeResponse struct {
 //       200: eventAttendeeResponse
 func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventAttendeeReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -147,10 +155,19 @@ func eventAttendeeBridge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := eventattendee.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.EventAttendeeBridge))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -191,11 +208,15 @@ type eventGetReq struct {
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location []float64 `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
 
-	// Sort results by [trending_index/ST_XMin(location), ASC/DESC/empty]
+	// Sort results by [trending_index/ST_XMin(location)]
 	// in: query
-	SortBy []string `schema:"sortby" json:"sortby"`
+	SortBy string `schema:"sortby" json:"sortby"`
+
+	// Pagination
+	// in: query
+	Page int64 `schema:"page" json:"page"`
 
 	// Get short results
 	// in: query
@@ -204,24 +225,24 @@ type eventGetReq struct {
 
 // swagger:model
 type eventShort struct {
-	EventID       string                 `json:"event_id"`
-	Name          string                 `json:"name"`
-	Location      models.GeographyPoints `json:"location"`
-	TypeOfEvent   int64                  `json:"type_of_event"`
-	TrendingIndex int64                  `json:"trending_index"`
+	EventID       string                `json:"event_id"`
+	Name          string                `json:"name"`
+	Location      types.GeographyPoints `json:"location"`
+	TypeOfEvent   int64                 `json:"type_of_event"`
+	TrendingIndex int64                 `json:"trending_index"`
 }
 
 // swagger:response eventResponse
 type eventResponse struct {
-	// in: body
-	event event.Event
+	// in: query
+	event models.Event
 }
 
 // This response will be returned if "short" is true
 // Status code will be 200
 // swagger:response eventShortResponse
 type eventShortResponse struct {
-	// in: body
+	// in: query
 	event eventShort
 }
 
@@ -250,7 +271,7 @@ type eventShortResponse struct {
 //		 - 201: eventShortResponse
 func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req eventGetReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -264,9 +285,18 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := event.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Page(req.Page, helpers.MaxPage).Order(req.SortBy, false).Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.Event))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)
@@ -276,42 +306,102 @@ func eventGetHandler(w http.ResponseWriter, r *http.Request) {
 
 // Event details
 //
-//swagger:parameters createEvent
+//swagger:parameters getEventAll
+type eventGetAllReq struct {
+	// Sort results by [trending_index/ST_XMin(location)]
+	// in: query
+	SortBy string `schema:"sortby" json:"sortby"`
+
+	// Pagination
+	// in: query
+	Page int64 `schema:"page" json:"page"`
+}
+
+// swagger:route GET /api/event/get/all event getEventAll
+//
+// Get all events
+//
+//
+// This will show details of event
+// Atleast one param is required
+//
+//     Consumes:
+//     - application/x-www-form-urlencoded
+//
+//     Produces:
+//     - application/json
+//
+//     Schemes: http
+//
+//
+//     Security:
+//       cookieAuth
+//
+//     Responses:
+//       - 200: eventResponse
+//		 - 201: eventShortResponse
+func eventGetAllHandler(w http.ResponseWriter, r *http.Request) {
+	var req eventGetAllReq
+	err := readAndUnmarshal(r, &req)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusBadRequest, w)
+		return
+	}
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
+	defer model.Close()
+	data, err := req.CastToModel()
+	x, err := model.Page(req.Page, helpers.MaxPage).Order(req.SortBy, false).Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.Event))
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+		return
+	}
+}
+
+//swagger:model
 type eventPostReq struct {
 
 	// ID of host of event (org)
-	// in: query
 	OrganisationID string `schema:"organisation_id" json:"organisation_id"`
 
 	// ID of host of event (user)
-	// in: query
 	VolunteerID string `schema:"volunteer_id" json:"volunteer_id"`
 
 	// Name of event
-	// in: query
 	Name string `schema:"name,required" json:"name"`
 
 	// Name of event
-	// in: query
 	Description string `schema:"description,required" json:"description"`
 
 	// Start time of event [unix timestamp]
-	// in: query
 	StartTime int64 `schema:"start_time,required" json:"start_time"`
 
 	// Type of category [Refer to event_category]
-	// in: query
 	Category int `schema:"category,required" json:"category"`
 
 	// Type of category [0 - Virtual, 1 - Physical]
-	// in: query
 	TypeOfEvent int64 `schema:"type_of_event,required" json:"type_of_event"`
 
 	// Location in [Longitude, Latitude]
-	// in: query
 	// minItems: 2
 	// maxItems: 2
-	Location []float64 `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
+}
+
+//swagger:parameters createEvent
+type eventPostModel struct {
+	//in: query
+	EventsPostModel eventPostReq
 }
 
 // swagger:route POST /api/event/create event createEvent
@@ -335,10 +425,14 @@ type eventPostReq struct {
 //     Responses:
 //       200: successResponse
 func eventCreateHandler(w http.ResponseWriter, r *http.Request) {
-	model := event.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
+
 	var req eventPostReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err = readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

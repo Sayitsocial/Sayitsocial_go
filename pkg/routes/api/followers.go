@@ -7,19 +7,21 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
-// Add follower details
-//
-//swagger:parameters addFollower
-type followerCreReq struct {
+//swagger:model
+type followerReq struct {
 	// ID of organisation who is being followed
-	// in: query
 	// required: true
 	OrganisationID string `schema:"organisation_id" json:"organisation_id"`
 
 	// ID of volunteer who is following
-	// in: query
 	// required: true
 	VolunteerID string `schema:"volunteer_id" json:"volunteer_id"`
+}
+
+//swagger:parameters addFollower
+type followerCreModel struct {
+	// in: query
+	Followers followerReq
 }
 
 // swagger:route POST /api/followers/add followers addFollower
@@ -41,8 +43,8 @@ type followerCreReq struct {
 //     Responses:
 //       200: successResponse
 func addFollowerHandler(w http.ResponseWriter, r *http.Request) {
-	var req followerCreReq
-	err := decoder.Decode(&req, r.URL.Query())
+	var req followerReq
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -61,19 +63,10 @@ func addFollowerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Remove follower details
-//
 //swagger:parameters delFollower
-type followerDelReq struct {
-	// ID of organisation who is being followed
+type followerDelModel struct {
 	// in: query
-	// required: true
-	OrganisationID string `schema:"organisation_id,required" json:"organisation_id"`
-
-	// ID of volunteer who is following
-	// in: query
-	// required: true
-	VolunteerID string `schema:"volunteer_id,required" json:"volunteer_id"`
+	Followers followerReq
 }
 
 // swagger:route POST /api/followers/remove followers delFollower
@@ -95,8 +88,8 @@ type followerDelReq struct {
 //     Responses:
 //       200: successResponse
 func removeFollowerHandler(w http.ResponseWriter, r *http.Request) {
-	var req followerDelReq
-	err := decoder.Decode(&req, r.URL.Query())
+	var req followerReq
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)

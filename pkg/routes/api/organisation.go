@@ -4,57 +4,50 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder"
+	"github.com/Sayitsocial/Sayitsocial_go/pkg/database/querybuilder/types"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/models"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/models/organisation/orgdata"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/common"
 )
 
 // Signup details for Organisation
 //
-//swagger:parameters createOrganisation
+//swagger:model
 type orgCreReq struct {
 
 	// Email of Organisation
 	// required: true
-	// in: query
 	Email string `schema:"email,required" json:"email"`
 
 	// Password of user
 	// required: true
-	// in: query
 	Password string `schema:"password,required" json:"password"`
 
 	// Name of Organisation
 	// required: true
-	// in: query
 	OrgName string `schema:"org_name,required" json:"org_name"`
 
 	// Type of Organisation
 	// required: true
-	// in: query
-	TypeOfOrg OrgType `schema:"org_type,required" json:"org_type"`
-
-	// Locality of Organisation
-	// required: true
-	// in: query
-	Locality string `schema:"locality,required" json:"locality"`
+	TypeOfOrg int `schema:"org_type,required" json:"org_type,string"`
 
 	// Owner of Organisation
 	// required: true
-	// in: query
 	Owner string `schema:"owner,required" json:"owner"`
 
 	// Registration Number of organisation according to ngodarpan if applicable
 	// required: false
-	// in: query
 	RegistrationNo string `schema:"reg_no,required" json:"reg_no"`
 
 	// Location in [Longitude, Latitude]
-	// in: query
 	// minItems: 2
 	// maxItems: 2
-	Location []float64 `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
+}
+
+type orgCreModel struct {
+	Organisation orgCreReq
 }
 
 // swagger:route POST /api/org/create organisation createOrganisation
@@ -79,7 +72,7 @@ type orgCreReq struct {
 //       200: successResponse
 func orgCreateHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgCreReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 
 	if err != nil {
 		helpers.LogError("Error in GET parameters : " + err.Error())
@@ -116,17 +109,17 @@ type orgGetReq struct {
 
 	// Type of organisation
 	// in: query
-	TypeOfOrg int `schema:"type_of_org" json:"type_of_org"`
+	TypeOfOrg int `schema:"type_of_org" json:"type_of_org,string"`
 
 	// Location in [Longitude, Latitude, Radius]
 	// in: query
 	// minItems: 3
 	// maxItems: 3
-	Location []float64 `schema:"location" json:"location"`
+	Location types.GeographyPoints `schema:"location" json:"location"`
 
-	// Sort results by [followers, ASC/DESC]
+	// Sort results by [followers]
 	// in: query
-	SortBy []string `schema:"sortby" json:"sortby"`
+	SortBy string `schema:"sortby" json:"sortby"`
 
 	// Get short results
 	// in: query
@@ -135,24 +128,22 @@ type orgGetReq struct {
 
 // swagger:model
 type orgDataShort struct {
-	OrganisationID string                 `json:"organisation_id"`
-	DisplayName    string                 `json:"display_name"`
-	TypeOfOrg      int                    `json:"type_of_org"`
-	Location       models.GeographyPoints `json:"location"`
-	Followers      uint64                 `json:"follower_count"`
+	OrganisationID string                `json:"organisation_id"`
+	DisplayName    string                `json:"display_name"`
+	TypeOfOrg      int                   `json:"type_of_org"`
+	Location       types.GeographyPoints `json:"location"`
+	Followers      uint64                `json:"follower_count"`
 }
 
 // swagger:response orgResponse
 type orgResponse struct {
-	// in: body
-	org orgdata.OrgData
+	org models.OrgData
 }
 
 // This response will be returned if "short" is true
 // Status code will be 200
 // swagger:response orgResponseShort
 type orgShortResponse struct {
-	// in: body
 	org orgDataShort
 }
 
@@ -180,7 +171,7 @@ type orgShortResponse struct {
 //		 201: orgResponseShort
 func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 	var req orgGetReq
-	err := decoder.Decode(&req, r.URL.Query())
+	err := readAndUnmarshal(r, &req)
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
@@ -193,10 +184,19 @@ func orgGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := orgdata.Initialize(nil)
+	model, err := querybuilder.Initialize(nil, nil)
+	if err != nil {
+		helpers.LogError(err.Error())
+	}
 	defer model.Close()
 
-	err = json.NewEncoder(w).Encode(model.Get(data))
+	x, err := model.Order(req.SortBy, false).Get(data)
+	if err != nil {
+		helpers.LogError(err.Error())
+		common.WriteError(err.Error(), http.StatusInternalServerError, w)
+	}
+
+	err = json.NewEncoder(w).Encode(x.(*[]models.OrgData))
 	if err != nil {
 		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusInternalServerError, w)

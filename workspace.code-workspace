@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"gopls": {
+			"build.allowImplicitNetworkAccess": true
+		},
+		"go.lintTool": "golint"
+	}
+}

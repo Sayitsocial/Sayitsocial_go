@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"time"
 
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	_ "github.com/lib/pq"
@@ -12,21 +14,20 @@ import (
 
 // GetConn returns Conn to database
 func GetConn() *sql.DB {
-
-	conn, err := sql.Open("postgres", helpers.PgConnString)
-	helpers.LogInfo(helpers.PgConnString)
-
-	if err != nil {
-		helpers.LogError(err.Error())
+	for {
+		conn, err := sql.Open("postgres", helpers.PgConnString)
+		if err != nil {
+			helpers.LogError(err.Error())
+			time.Sleep(30 * time.Second)
+		}
+		return conn
 	}
-
-	return conn
 }
 
 // RunMigrations runs all provided migrations
 func RunMigrations() error {
 	migrationsAuth := &migrate.HttpFileSystemMigrationSource{
-		FileSystem: http.Dir("./pkg/database/migrations/"),
+		FileSystem: http.Dir(filepath.Join(helpers.GetWorkingDirectory(), "/pkg/database/migrations/")),
 	}
 
 	err := doMigrate(migrationsAuth)
@@ -40,10 +41,6 @@ func doMigrate(migrations *migrate.HttpFileSystemMigrationSource) error {
 	conn := GetConn()
 
 	// _, err := migrate.Exec(conn, "postgres", migrations, migrate.Down)
-
-	// if err != nil {
-	// 	return err
-	// }
 
 	n, err := migrate.Exec(conn, "postgres", migrations, migrate.Up)
 

@@ -44,7 +44,6 @@ BEGIN
 	ELSE 
 		UPDATE organisation.organisation SET followers = (SELECT COUNT("generated_id") FROM organisation.follower_bridge) WHERE organisation_id = OLD.organisation_id;
 	END IF;
-	RETURN NEW;
 END;
 
 	$$;

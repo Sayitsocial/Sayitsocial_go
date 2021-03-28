@@ -1,22 +1,47 @@
+version: '3'
+
 services:
-  sayitsocialgo:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: sayitsocial/sayitsocial:${TAG}
-    env_file:
-      - goapp.env
-    ports: 
-      - 8000:8000
   postgres:
-    image: postgis/postgis:9.5-2.5-alpine
+    image: sayitsocial/postgis:${TAG_PG}
     env_file:
       - postgres.env
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  reactapp:
+    build:
+      context: ./web/v2
+      dockerfile: Dockerfile
+    image: sayitsocial/sayitsocial-react:${TAG_REACT}
+    volumes:
+      - reactapp:/data
+    ports: 
+      - 7888:80
+  sayitsocialgo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sayitsocial/sayitsocial:${TAG_GO}
+    env_file:
+      - goapp.env
+    ports: 
+      - 8000:8000
+    volumes:
+      - reactapp:/dist/web/v2/build
+    depends_on:
+      - postgres
+    restart: always
+    links:
+      - "postgres:database"
 
 volumes:
   pgdata:
+    external: false
+  reactapp:
     external: false
 
 

@@ -3,37 +3,72 @@ module github.com/Sayitsocial/Sayitsocial_go
 go 1.15
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-openapi/errors v0.20.0 // indirect
+	github.com/go-openapi/runtime v0.19.27 // indirect
+	github.com/go-openapi/validate v0.20.2 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
-	github.com/google/uuid v1.1.2
+	github.com/go-swagger/go-swagger v0.26.1 // indirect
+	github.com/gobuffalo/logger v1.0.3 // indirect
+	github.com/gobuffalo/packd v1.0.0 // indirect
+	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
+	github.com/google/uuid v1.2.0
+	github.com/gopherjs/gopherjs v0.0.0-20210202160940-bed99a852dfe // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/schema v1.2.0
+	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/sessions v1.2.1
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/jessevdk/go-flags v1.5.0 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
+	github.com/karrick/godirwalk v1.16.1 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.8.0
-	github.com/magiconair/properties v1.8.4 // indirect
-	github.com/mattn/go-sqlite3 v1.14.4 // indirect
-	github.com/mitchellh/mapstructure v1.3.3 // indirect
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/lib/pq v1.10.0
+	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/markbates/errx v1.1.0 // indirect
+	github.com/markbates/oncer v1.0.0 // indirect
+	github.com/markbates/safe v1.0.1 // indirect
+	github.com/mattn/go-sqlite3 v1.14.6 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/onsi/ginkgo v1.7.0
 	github.com/pelletier/go-toml v1.8.1 // indirect
-	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
-	github.com/sirupsen/logrus v1.7.0
-	github.com/spf13/afero v1.4.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
+	github.com/rubenv/sql-migrate v0.0.0-20210215143335-f84234893558
+	github.com/sirupsen/logrus v1.8.1
+	github.com/smartystreets/assertions v1.2.0 // indirect
+	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
-	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	golang.org/x/sys v0.0.0-20201109165425-215b40eba54c // indirect
-	golang.org/x/text v0.3.4 // indirect
-	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
+	github.com/ziutek/mymysql v1.5.4 // indirect
+	go.mongodb.org/mongo-driver v1.5.0 // indirect
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	golang.org/x/mod v0.4.2 // indirect
+	golang.org/x/net v0.0.0-20210326220855-61e056675ecf // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sys v0.0.0-20210326220804-49726bf1d181 // indirect
+	golang.org/x/term v0.0.0-20210317153231-de623e64d2a6 // indirect
+	golang.org/x/text v0.3.5 // indirect
+	golang.org/x/tools v0.1.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
-	gopkg.in/yaml.v2 v2.3.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
