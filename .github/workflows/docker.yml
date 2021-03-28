@@ -20,7 +20,7 @@ jobs:
         id: prep
         run: |
           REGISTRY="ghcr.io"
-          IMAGE="${REGISTRY}/${{ github.repository }}/${{ github.event.repository.name }}"
+          IMAGE="${REGISTRY}/${{ github.repository }}"
           TAGS="${IMAGE}:latest"
           echo ::set-output name=tags::${TAGS}
       
