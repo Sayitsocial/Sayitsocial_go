@@ -8,7 +8,6 @@ import (
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/api"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/authentication"
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/sayitsocial"
 	"github.com/gorilla/mux"
 )
 
@@ -17,7 +16,7 @@ type App interface {
 	Register(r *mux.Router)
 }
 
-var apps = []App{api.API{}, authentication.Authentication{}, sayitsocial.Sayitsocial{}}
+var apps = []App{api.API{}, authentication.Authentication{}}
 
 // RegisterApps registers all sub routes
 func RegisterApps(r *mux.Router) {
