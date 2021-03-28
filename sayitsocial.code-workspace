@@ -12,6 +12,7 @@
 		"go.vetOnSave": "workspace",
 		"goOutliner.extendExplorerTab": true,
 		"goTestExplorer.profiler.showCodeLens": true,
-		"goTestExplorer.runPackage.excludeBenchmarks": false
+		"goTestExplorer.runPackage.excludeBenchmarks": false,
+		"go.lintTool": "golint"
 	}
 }
