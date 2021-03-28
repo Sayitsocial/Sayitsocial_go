@@ -3,7 +3,6 @@
 config.*
 *.db
 *.log
-*.vscode
 *.history
 *.env
 *.out
