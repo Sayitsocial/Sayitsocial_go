@@ -46,7 +46,7 @@ jobs:
           platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/sayitsocial-go:latest
-            ghcr.io/${{ github.repository }}/sayitsocial-go:0.0.1
+            ghcr.io/sayitsocial/sayitsocial-go/sayitsocial-go:latest
+            ghcr.io/sayitsocial/sayitsocial-go/sayitsocial-go:0.0.1
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
