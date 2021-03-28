@@ -17,15 +17,15 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Preparation
-      id: prep
-      run: |
-        REGISTRY="ghcr.io"
-        IMAGE="${REGISTRY}/${{ github.repository }}/${{ github.event.repository.name }}"
-        TAGS="${IMAGE}:${{ github.sha }}"
-        if [[ $GITHUB_REF == ref/head/master ]]; then
-          TAGS="${TAGS},${IMAGE}:latest"
-        fi
-        echo ::set-output name=tags::${TAGS}
+        id: prep
+        run: |
+          REGISTRY="ghcr.io"
+          IMAGE="${REGISTRY}/${{ github.repository }}/${{ github.event.repository.name }}"
+          TAGS="${IMAGE}:${{ github.sha }}"
+          if [[ $GITHUB_REF == ref/head/master ]]; then
+            TAGS="${TAGS},${IMAGE}:latest"
+          fi
+          echo ::set-output name=tags::${TAGS}
       
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
