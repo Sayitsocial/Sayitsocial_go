@@ -21,10 +21,7 @@ jobs:
         run: |
           REGISTRY="ghcr.io"
           IMAGE="${REGISTRY}/${{ github.repository }}/${{ github.event.repository.name }}"
-          TAGS="${IMAGE}:${{ github.sha }}"
-          if [[ $GITHUB_REF == ref/head/master ]]; then
-            TAGS="${TAGS},${IMAGE}:latest"
-          fi
+          TAGS="${IMAGE}:latest"
           echo ::set-output name=tags::${TAGS}
       
       - name: Setup Docker Buildx
