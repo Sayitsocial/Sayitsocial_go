@@ -22,6 +22,7 @@ jobs:
         run: |
           REGISTRY="ghcr.io"
           IMAGE="${REGISTRY}/${{ github.repository }}"
+          branchName=${GITHUB_REF#refs/heads/}
           if [ $branchName = 'semibroken' ]; then TAGS="${IMAGE}:development"; else TAGS="${IMAGE}:latest"; fi
           echo ::set-output name=tags::${TAGS}
       
