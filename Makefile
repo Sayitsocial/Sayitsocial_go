@@ -1,8 +1,8 @@
 include *.env
 export
 
-export TAG_GO=latest
-export TAG_REACT=latest
+export TAG_GO=development
+export TAG_REACT=development
 
 uname_p := $(shell uname -p)
 ifeq ($(uname_p),aarch64)
@@ -17,8 +17,11 @@ up:
 down:
 	docker-compose down
 
+build:
+	docker build -t ghcr.io/sayitsocial/sayitsocial_go:development .
+
 pull:
-	docker pull sayitsocial/sayitsocial:development && docker pull sayitsocial/sayitsocial-react:development
+	docker pull ghcr.io/sayitsocial/sayitsocial_go:development && docker pull ghcr.io/sayitsocial/front-react:development
 
 run:
 	DEBUG=true go run main.go
