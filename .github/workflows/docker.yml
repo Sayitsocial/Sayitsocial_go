@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'semibroken'
 
 env:
   IMAGE_NAME: sayitsocial-go
@@ -21,7 +22,8 @@ jobs:
         run: |
           REGISTRY="ghcr.io"
           IMAGE="${REGISTRY}/${{ github.repository }}"
-          TAGS="${IMAGE}:latest"
+          branchName=${GITHUB_REF#refs/heads/}
+          if [ $branchName = 'semibroken' ]; then TAGS="${IMAGE}:development"; else TAGS="${IMAGE}:latest"; fi
           echo ::set-output name=tags::${TAGS}
       
       - name: Setup Docker Buildx
