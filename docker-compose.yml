@@ -17,13 +17,13 @@ services:
     volumes:
       - reactapp:/data
     ports: 
-      - 7888:80
+      - 9000:80
   sayitsocialgo:
     image: ghcr.io/sayitsocial/sayitsocial_go:${TAG_GO}
     env_file:
       - goapp.env
     ports: 
-      - 8000:8000
+      - 9001:8000
     volumes:
       - reactapp:/dist/web/v2/build
     depends_on:
