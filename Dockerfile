@@ -5,10 +5,8 @@ FROM golang:1.15.5-alpine3.12 AS build
 
 WORKDIR /build
 ADD . ./
-
-
-ADD main.go .
 RUN go build main.go
+
 
 FROM alpine
 

@@ -16,6 +16,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_TOKEN }}
 
       - name: Preparation
         id: prep
