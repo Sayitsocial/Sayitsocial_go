@@ -11,7 +11,7 @@ else
 export TAG_PG=12-3.1-alpine
 endif
 
-up:
+up: pull
 	docker-compose up -d
 
 down:

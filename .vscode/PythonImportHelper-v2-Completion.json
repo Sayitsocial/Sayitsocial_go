@@ -1,0 +1,108 @@
+[
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {
+            "value": "\n```python\nimport os\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "getcwd",
+        "importPath": "os",
+        "description": "os",
+        "isExtraImport": true,
+        "detail": "os",
+        "documentation": {
+            "value": "\n```python\nimport os\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "system",
+        "importPath": "os",
+        "description": "os",
+        "isExtraImport": true,
+        "detail": "os",
+        "documentation": {
+            "value": "\n```python\nimport os\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "subprocess",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "subprocess",
+        "description": "subprocess",
+        "detail": "subprocess",
+        "documentation": {
+            "value": "\n```python\nimport subprocess\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "shutil",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "shutil",
+        "description": "shutil",
+        "detail": "shutil",
+        "documentation": {
+            "value": "\n```python\nimport shutil\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "install_modules",
+        "kind": 2,
+        "importPath": "scripts.build_react",
+        "description": "scripts.build_react",
+        "peekOfCode": "def install_modules():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"install\"]).stderr\n    if err is not None:\n        print(err)\ndef build_react_yarn():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"build\"]).stderr\n    if err is not None:\n        print(err)\ndef move_build():\n    source = os.path.join(react_path, \"build\")",
+        "detail": "scripts.build_react",
+        "documentation": {
+            "value": "\n```python\nfrom scripts.build_react import install_modules\n```\n\n```python\n\n\n```\n\n```python\ndef install_modules():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"install\"]).stderr\n    if err is not None:\n        print(err)\ndef build_react_yarn():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"build\"]).stderr\n    if err is not None:\n        print(err)\ndef move_build():\n    source = os.path.join(react_path, \"build\")\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "build_react_yarn",
+        "kind": 2,
+        "importPath": "scripts.build_react",
+        "description": "scripts.build_react",
+        "peekOfCode": "def build_react_yarn():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"build\"]).stderr\n    if err is not None:\n        print(err)\ndef move_build():\n    source = os.path.join(react_path, \"build\")\n    dest = os.path.abspath(os.path.join(react_path, \"../dist\"))\n    if os.path.exists(dest):\n        shutil.rmtree(dest)\n    shutil.move(source, dest)",
+        "detail": "scripts.build_react",
+        "documentation": {
+            "value": "\n```python\nfrom scripts.build_react import build_react_yarn\n```\n\n```python\n\n\n```\n\n```python\ndef build_react_yarn():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"build\"]).stderr\n    if err is not None:\n        print(err)\ndef move_build():\n    source = os.path.join(react_path, \"build\")\n    dest = os.path.abspath(os.path.join(react_path, \"../dist\"))\n    if os.path.exists(dest):\n        shutil.rmtree(dest)\n    shutil.move(source, dest)\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "move_build",
+        "kind": 2,
+        "importPath": "scripts.build_react",
+        "description": "scripts.build_react",
+        "peekOfCode": "def move_build():\n    source = os.path.join(react_path, \"build\")\n    dest = os.path.abspath(os.path.join(react_path, \"../dist\"))\n    if os.path.exists(dest):\n        shutil.rmtree(dest)\n    shutil.move(source, dest)\nif __name__ == \"__main__\":\n    install_modules()\n    build_react_yarn()\n    move_build()",
+        "detail": "scripts.build_react",
+        "documentation": {
+            "value": "\n```python\nfrom scripts.build_react import move_build\n```\n\n```python\n\n\n```\n\n```python\ndef move_build():\n    source = os.path.join(react_path, \"build\")\n    dest = os.path.abspath(os.path.join(react_path, \"../dist\"))\n    if os.path.exists(dest):\n        shutil.rmtree(dest)\n    shutil.move(source, dest)\nif __name__ == \"__main__\":\n    install_modules()\n    build_react_yarn()\n    move_build()\n```\n",
+            "supportThemeIcons": false
+        }
+    },
+    {
+        "label": "react_path",
+        "kind": 5,
+        "importPath": "scripts.build_react",
+        "description": "scripts.build_react",
+        "peekOfCode": "react_path = os.path.abspath(os.path.join(\n    os.path.split(__file__)[0], \"../web/v2/\"))\ndef install_modules():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"install\"]).stderr\n    if err is not None:\n        print(err)\ndef build_react_yarn():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"build\"]).stderr\n    if err is not None:\n        print(err)",
+        "detail": "scripts.build_react",
+        "documentation": {
+            "value": "\n```python\nfrom scripts.build_react import react_path\n```\n\n```python\n\n\n```\n\n```python\nreact_path = os.path.abspath(os.path.join(\n    os.path.split(__file__)[0], \"../web/v2/\"))\ndef install_modules():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"install\"]).stderr\n    if err is not None:\n        print(err)\ndef build_react_yarn():\n    err = subprocess.run([\"yarn\", \"--cwd\", react_path, \"build\"]).stderr\n    if err is not None:\n        print(err)\n```\n",
+            "supportThemeIcons": false
+        }
+    }
+]
