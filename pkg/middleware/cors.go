@@ -14,16 +14,15 @@ func CorsMiddleware() mux.MiddlewareFunc {
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)
 				return
-			} else {
-				next.ServeHTTP(w, r)
 			}
+			next.ServeHTTP(w, r)
 		})
 	}
 }
 
 func addCorsHeader(res http.ResponseWriter) {
 	headers := res.Header()
-	headers.Add("Access-Control-Allow-Origin", "http://localhost:3000")
+	headers.Add("Access-Control-Allow-Origin", "*")
 	headers.Add("Vary", "Origin")
 	headers.Add("Vary", "Access-Control-Request-Method")
 	headers.Add("Vary", "Access-Control-Request-Headers")

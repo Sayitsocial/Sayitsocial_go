@@ -64,7 +64,6 @@ func eventHostBridge(w http.ResponseWriter, r *http.Request) {
 	var req eventHostReq
 	err := readAndUnmarshal(r, &req)
 	if err != nil {
-		helpers.LogError(err.Error())
 		common.WriteError(err.Error(), http.StatusBadRequest, w)
 		return
 	}

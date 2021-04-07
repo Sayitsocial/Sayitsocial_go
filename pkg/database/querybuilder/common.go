@@ -229,25 +229,30 @@ func getAllMembers(cols []colHolder, foreignCols []foreignHolder, isCreate bool)
 
 func getWhere(cols []colHolder, foreignCols []foreignHolder, appendTableName bool, forcePK bool) (query string, args []interface{}) {
 	for _, col := range cols {
-		if !checkEmpty(col.value) && !col.tagData.isForeign {
-			if forcePK && !isPK(col.tagData.primary) {
-				continue
-			}
-			if appendTableName {
-				if col.valueType == inbuiltValueType {
-					tquery, targs := col.value.(types.InbuiltType).WhereQuery(col.table, col.tagData.columnName, indexPlaceholder)
-					if tquery != "" {
-						query = fmt.Sprintf("%s %s AND", query, tquery)
-					}
-					args = append(args, targs...)
+		if !checkEmpty(col.value) {
+			if !col.tagData.isForeign {
+				if forcePK && !isPK(col.tagData.primary) {
 					continue
 				}
+				if appendTableName {
+					if col.valueType == inbuiltValueType {
+						tquery, targs := col.value.(types.InbuiltType).WhereQuery(col.table, col.tagData.columnName, indexPlaceholder)
+						if tquery != "" {
+							query = fmt.Sprintf("%s %s AND", query, tquery)
+						}
+						args = append(args, targs...)
+						continue
+					}
+					query = fmt.Sprintf("%s %s.%s=$%s AND", query, col.table, col.tagData.columnName, indexPlaceholder)
+					args = append(args, col.value)
+					continue
+				}
+				query = fmt.Sprintf("%s %s=$%s AND", query, col.tagData.columnName, indexPlaceholder)
+				args = append(args, col.value)
+			} else {
 				query = fmt.Sprintf("%s %s.%s=$%s AND", query, col.table, col.tagData.columnName, indexPlaceholder)
 				args = append(args, col.value)
-				continue
 			}
-			query = fmt.Sprintf("%s %s=$%s AND", query, col.tagData.columnName, indexPlaceholder)
-			args = append(args, col.value)
 		}
 	}
 
