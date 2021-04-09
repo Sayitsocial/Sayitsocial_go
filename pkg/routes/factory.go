@@ -1,11 +1,8 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/middleware"
 
-	"github.com/Sayitsocial/Sayitsocial_go/pkg/helpers"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/api"
 	"github.com/Sayitsocial/Sayitsocial_go/pkg/routes/authentication"
 	"github.com/gorilla/mux"
@@ -24,11 +21,4 @@ func RegisterApps(r *mux.Router) {
 	for _, i := range apps {
 		i.Register(r)
 	}
-}
-
-// RegisterFileServer registers all static fileservers
-func RegisterFileServer(r *mux.Router) {
-	r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/",
-		http.FileServer(http.Dir(helpers.SwaggerPath)),
-	))
 }

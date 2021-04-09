@@ -61,7 +61,6 @@ func initWebApp() error {
 	router := mux.NewRouter()
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 
-	routes.RegisterFileServer(router)
 	routes.RegisterApps(router)
 
 	helpers.LogInfo("Server starting at " + *addr)
