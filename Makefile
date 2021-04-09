@@ -26,5 +26,5 @@ pull:
 run:
 	DEBUG=true go run main.go
 
-swagger:
+genswagger:
 	swagger generate spec -o ./swagger/swagger.yaml --scan-models

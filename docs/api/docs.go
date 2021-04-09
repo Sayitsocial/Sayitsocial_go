@@ -2,10 +2,10 @@
 //
 // Documentation of SayItSocialAPI.
 //
-//     Schemes: http
+//     Schemes: https
 //     BasePath:
 //     Version: 1.0.0
-//     Host: dev.sayitsocial.in:9001
+//     Host: dev.sayitsocial.in:8443
 //
 //     Consumes:
 //     - application/json
