@@ -32,6 +32,9 @@ services:
     restart: always
     links:
       - "postgres:database"
+    volumes:
+      - /etc/letsencrypt/live/sayitsocial.in/fullchain.pem:/etc/letsencrypt/live/sayitsocial.in/fullchain.pem
+      - /etc/letsencrypt/live/sayitsocial.in/privkey.pem:/etc/letsencrypt/live/sayitsocial.in/privkey.pem
   watchtower:
     image: containrrr/watchtower
     volumes:
