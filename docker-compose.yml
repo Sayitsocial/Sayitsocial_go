@@ -15,9 +15,12 @@ services:
   reactapp:
     image: ghcr.io/sayitsocial/front-react:${TAG_REACT}
     volumes:
-      - /etc/letsencrypt/live/sayitsocial.in:/etc/letsencrypt/live/sayitsocial.in
+      - /etc/letsencrypt/live/sayitsocial.in/fullchain.pem:/etc/letsencrypt/live/sayitsocial.in/fullchain.pem
+      - /etc/letsencrypt/live/sayitsocial.in/privkey.pem:/etc/letsencrypt/live/sayitsocial.in/privkey.pem
+      - /etc/letsencrypt/options-ssl-nginx.conf:/etc/letsencrypt/options-ssl-nginx.conf
     ports: 
       - 9000:80
+      - 8443:443
   sayitsocialgo:
     image: ghcr.io/sayitsocial/sayitsocial_go:${TAG_GO}
     env_file:
