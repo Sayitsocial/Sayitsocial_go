@@ -3,15 +3,13 @@ package helpers
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 var basePath = ""
 
 // GetWorkingDirectory returns the set basePath
 func GetWorkingDirectory() string {
-	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
-	if !debug || err != nil {
+	if !DEBUG {
 		return GetExecutableDirectory()
 	}
 	return basePath

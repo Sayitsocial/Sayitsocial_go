@@ -66,7 +66,13 @@ func initWebApp() error {
 
 	helpers.LogInfo("Server starting at " + *addr)
 
-	err := http.ListenAndServe(*addr, loggedRouter)
+	var err error
+
+	if helpers.DEBUG {
+		err = http.ListenAndServe(*addr, loggedRouter)
+	} else {
+		err = http.ListenAndServeTLS(*addr, "/etc/letsencrypt/live/sayitsocial.in/fullchain.pem", "/etc/letsencrypt/live/sayitsocial.in/privkey.pem", loggedRouter)
+	}
 	if err != nil {
 		helpers.LogError(err)
 		return err

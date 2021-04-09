@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 // Path constants
@@ -15,6 +16,7 @@ var (
 	SwaggerPath  string
 	DatabasePath string
 	PgConnString string
+	DEBUG        bool
 )
 
 // Generic constants
@@ -56,4 +58,6 @@ func initPaths() {
 	StaticPath2 = filepath.Join(GetWorkingDirectory(), "web/v2/build")
 	SwaggerPath = filepath.Join(GetWorkingDirectory(), "swagger")
 	DatabasePath = filepath.Join(GetWorkingDirectory(), "database")
+	DEBUG, _ = strconv.ParseBool(os.Getenv("DEBUG"))
+
 }
