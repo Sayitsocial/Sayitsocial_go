@@ -15,7 +15,7 @@ services:
   reactapp:
     image: ghcr.io/sayitsocial/front-react:${TAG_REACT}
     volumes:
-      - reactapp:/data
+      - /etc/letsencrypt/live/sayitsocial.in:/etc/letsencrypt/live/sayitsocial.in
     ports: 
       - 9000:80
   sayitsocialgo:
@@ -24,8 +24,6 @@ services:
       - goapp.env
     ports: 
       - 9001:8000
-    volumes:
-      - reactapp:/dist/web/v2/build
     depends_on:
       - postgres
     restart: always
@@ -40,8 +38,6 @@ services:
 
 volumes:
   pgdata:
-    external: false
-  reactapp:
     external: false
 
 
